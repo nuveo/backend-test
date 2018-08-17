@@ -2,6 +2,10 @@
 
 Develop the workflow's REST API following the specification bellow and document it.
 
+## Delivery instructions
+
+Fork this project in a private project and create a branch. When you want to our review, create a PR and put any information that you think is important. Consider we follow your instructions to run your code and look the outcome.
+
 ## Defining a workflow
 
 |Name|Type|Description|
