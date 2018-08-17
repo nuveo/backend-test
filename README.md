@@ -8,8 +8,8 @@ Develop the workflow's REST API following the specification bellow and document 
 |-|-|-|
 |UUID|UUID|workflow unique indentifier|
 |status|Enum(inserted, consumed)|workflow status|
-|Data|JSONB|workflow input|
-|Steps|Array|name of workflow steps
+|data|JSONB|workflow input|
+|steps|Array|name of workflow steps
 
 ## Endpoints
 
