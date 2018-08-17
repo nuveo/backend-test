@@ -22,7 +22,7 @@ Develop the workflow's REST API following the specification bellow and document 
 
 ## Technologies
 
-- Go, C ou C++
+- Go, C or C++
 - PostgreSQL
 - A message queue that you choose, but discribe why you choose.
 - [pREST](http://postgres.rest) to comunicate with database. It is a bonus.
