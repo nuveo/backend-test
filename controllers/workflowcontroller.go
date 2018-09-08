@@ -15,12 +15,12 @@ import (
 
 //Controller ...
 type Controller struct {
-	Repo repositories.Repository
+	Repo repositories.WorkflowRepository
 }
 
 //ListWorkflows GET /workflow
 func (c *Controller) ListWorkflows(w http.ResponseWriter, r *http.Request) {
-	products := c.Repo.GetWorkflows() // list of all products
+	products := c.Repo.FindAll() // list of all products
 	log.Println(products)
 	data, _ := json.Marshal(products)
 	log.Printf("jsonData: %s\n", data)
@@ -62,7 +62,7 @@ func (c *Controller) AddWorkflow(w http.ResponseWriter, r *http.Request) {
 
 	log.Println(workflow)
 	// adds the product to the DB
-	success := c.Repo.AddWorkflow(workflow)
+	success := c.Repo.Save(workflow)
 	if !success {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
@@ -73,24 +73,6 @@ func (c *Controller) AddWorkflow(w http.ResponseWriter, r *http.Request) {
 	w.Write(data)
 	return
 }
-
-// // SearchProduct GET /
-// func (c *Controller) SearchProduct(w http.ResponseWriter, r *http.Request) {
-// 	vars := mux.Vars(r)
-// 	log.Println(vars)
-
-// 	query := vars["query"] // param query
-// 	log.Println("Search Query - " + query)
-
-// 	products := c.repo.ccGetProductsByString(query)
-// 	data, _ := json.Marshal(products)
-
-// 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-// 	w.Header().Set("Access-Control-Allow-Origin", "*")
-// 	w.WriteHeader(http.StatusOK)
-// 	w.Write(data)
-// 	return
-// }
 
 //UpdateWorkflow Update status from a specific workflow PATCH /
 func (c *Controller) UpdateWorkflow(w http.ResponseWriter, r *http.Request) {
@@ -132,7 +114,7 @@ func (c *Controller) UpdateWorkflow(w http.ResponseWriter, r *http.Request) {
 
 	// updates the product in the DB
 	workflow.UUID = uuidWorflow
-	success := c.Repo.UpdateWorkflow(workflow)
+	success := c.Repo.Save(workflow)
 
 	if !success {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -147,7 +129,7 @@ func (c *Controller) UpdateWorkflow(w http.ResponseWriter, r *http.Request) {
 
 // ConsumeWorkflows GET /consume
 func (c *Controller) ConsumeWorkflows(w http.ResponseWriter, r *http.Request) {
-	products := c.Repo.ConsumeWorkflows() // list of all products
+	products := c.Repo.ConsumeFromQueue() // list of all products
 	log.Println(products)
 	data, _ := json.Marshal(products)
 	log.Printf("jsonData: %s\n", data)

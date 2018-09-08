@@ -9,7 +9,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
-var controller = &controllers.Controller{Repo: repositories.Repository{}}
+var controller = &controllers.Controller{Repo: &repositories.MockRepository{}}
 
 // Route defines a route
 type Route struct {
