@@ -2,7 +2,7 @@
 package main
 
 import (
-	"backend-test/workflow"
+	"backend-test/routers"
 	"log"
 	"net/http"
 
@@ -16,13 +16,12 @@ func main() {
 	if port == "" {
 		log.Fatal("$PORT must be set")
 	}
-
 	//Crate routes
-	router := workflow.NewRouter()
+	router := routers.NewRouter()
 
 	// These two lines are important in order to allow access from the front-end side to the methods
 	allowedOrigins := handlers.AllowedOrigins([]string{"*"})
-	allowedMethods := handlers.AllowedMethods([]string{"GET", "POST", "DELETE", "PUT"})
+	allowedMethods := handlers.AllowedMethods([]string{"GET", "POST", "PATH"})
 
 	// Launch server with CORS validations
 	log.Fatal(http.ListenAndServe(":"+port, handlers.CORS(allowedOrigins, allowedMethods)(router)))

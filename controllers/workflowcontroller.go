@@ -1,6 +1,8 @@
-package workflow
+package controllers
 
 import (
+	"backend-test/models"
+	"backend-test/repositories"
 	"encoding/json"
 	"io"
 	"io/ioutil"
@@ -13,12 +15,12 @@ import (
 
 //Controller ...
 type Controller struct {
-	Repository Repository
+	Repo repositories.Repository
 }
 
-// GET /workflow
+//ListWorkflows GET /workflow
 func (c *Controller) ListWorkflows(w http.ResponseWriter, r *http.Request) {
-	products := c.Repository.GetWorkflows() // list of all products
+	products := c.Repo.GetWorkflows() // list of all products
 	log.Println(products)
 	data, _ := json.Marshal(products)
 	log.Printf("jsonData: %s\n", data)
@@ -29,9 +31,9 @@ func (c *Controller) ListWorkflows(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
-// POST /workflow
+// AddWorkflow POST /workflow
 func (c *Controller) AddWorkflow(w http.ResponseWriter, r *http.Request) {
-	var workflow Workflow
+	var workflow models.Workflow
 
 	// read the body of the request
 	body, err := ioutil.ReadAll(io.LimitReader(r.Body, 1048576))
@@ -60,7 +62,7 @@ func (c *Controller) AddWorkflow(w http.ResponseWriter, r *http.Request) {
 
 	log.Println(workflow)
 	// adds the product to the DB
-	success := c.Repository.AddWorkflow(workflow)
+	success := c.Repo.AddWorkflow(workflow)
 	if !success {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
@@ -80,7 +82,7 @@ func (c *Controller) AddWorkflow(w http.ResponseWriter, r *http.Request) {
 // 	query := vars["query"] // param query
 // 	log.Println("Search Query - " + query)
 
-// 	products := c.Repository.GetProductsByString(query)
+// 	products := c.repo.ccGetProductsByString(query)
 // 	data, _ := json.Marshal(products)
 
 // 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
@@ -90,9 +92,9 @@ func (c *Controller) AddWorkflow(w http.ResponseWriter, r *http.Request) {
 // 	return
 // }
 
-// Update status from a specific workflow PATCH /
+//UpdateWorkflow Update status from a specific workflow PATCH /
 func (c *Controller) UpdateWorkflow(w http.ResponseWriter, r *http.Request) {
-	var workflow Workflow
+	var workflow models.Workflow
 
 	vars := mux.Vars(r)
 	log.Println(vars)
@@ -130,7 +132,7 @@ func (c *Controller) UpdateWorkflow(w http.ResponseWriter, r *http.Request) {
 
 	// updates the product in the DB
 	workflow.UUID = uuidWorflow
-	success := c.Repository.UpdateWorkflow(workflow)
+	success := c.Repo.UpdateWorkflow(workflow)
 
 	if !success {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -143,9 +145,9 @@ func (c *Controller) UpdateWorkflow(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
-// GET /consume
+// ConsumeWorkflows GET /consume
 func (c *Controller) ConsumeWorkflows(w http.ResponseWriter, r *http.Request) {
-	products := c.Repository.ConsumeWorkflows() // list of all products
+	products := c.Repo.ConsumeWorkflows() // list of all products
 	log.Println(products)
 	data, _ := json.Marshal(products)
 	log.Printf("jsonData: %s\n", data)

@@ -1,13 +1,15 @@
-package workflow
+package routers
 
 import (
+	"backend-test/controllers"
+	"backend-test/repositories"
 	"log"
 	"net/http"
 
 	"github.com/gorilla/mux"
 )
 
-var controller = &Controller{Repository: Repository{}}
+var controller = &controllers.Controller{Repo: repositories.Repository{}}
 
 // Route defines a route
 type Route struct {

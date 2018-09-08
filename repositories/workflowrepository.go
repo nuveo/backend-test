@@ -1,6 +1,7 @@
-package workflow
+package repositories
 
 import (
+	"backend-test/models"
 	"fmt"
 )
 
@@ -12,7 +13,7 @@ import (
 
 //Repository ...
 type Repository struct {
-	MockWorkflows []Workflow
+	MockWorkflows []models.Workflow
 }
 
 // SERVER the DB server
@@ -26,10 +27,9 @@ type Repository struct {
 
 // var productId = 10
 
-// GetProducts returns the list of Products
-func (r *Repository) GetWorkflows() []Workflow {
+// GetWorkflows returns the list of Products
+func (r *Repository) GetWorkflows() []models.Workflow {
 	// session, err := mgo.Dial(SERVER)
-
 	// if err != nil {
 	// 	fmt.Println("Failed to establish connection to Mongo server:", err)
 	// }
@@ -115,7 +115,7 @@ func (r *Repository) GetWorkflows() []Workflow {
 // }
 
 // AddWorkflow adds a Workflow in the DB
-func (r *Repository) AddWorkflow(workflow Workflow) bool {
+func (r *Repository) AddWorkflow(workflow models.Workflow) bool {
 
 	// session, err := mgo.Dial(SERVER)
 	// defer session.Close()
@@ -133,8 +133,8 @@ func (r *Repository) AddWorkflow(workflow Workflow) bool {
 	return true
 }
 
-// UpdateProduct updates a Product in the DB
-func (r *Repository) UpdateWorkflow(workflowNew Workflow) bool {
+// UpdateWorkflow updates a Product in the DB
+func (r *Repository) UpdateWorkflow(workflowNew models.Workflow) bool {
 	// session, err := mgo.Dial(SERVER)
 	// defer session.Close()
 
@@ -174,8 +174,8 @@ func (r *Repository) UpdateWorkflow(workflowNew Workflow) bool {
 // 	return "OK"
 // }
 
-// Consume by Queue and returns the list of workflows
-func (r *Repository) ConsumeWorkflows() []Workflow {
+//ConsumeWorkflows by Queue and returns the list of workflows
+func (r *Repository) ConsumeWorkflows() []models.Workflow {
 	// session, err := mgo.Dial(SERVER)
 
 	// if err != nil {
