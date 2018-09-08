@@ -21,17 +21,18 @@ type Route struct {
 type Routes []Route
 
 var routes = Routes{
-	// Route{
-	// 	"Authentication",
-	// 	"POST",
-	// 	"/get-token",
-	// 	controller.GetToken,
-	// },
 	Route{
-		"Index",
+		"[GET]: /workflow - List all workflows",
 		"GET",
 		"/workflow",
 		controller.Index,
+	},
+
+	Route{
+		"[POST]: /workflow - Insert a workflow on database and on queue and respond request with the inserted workflow",
+		"POST",
+		"/workflow",
+		controller.AddWorkflow,
 	}}
 
 // ,

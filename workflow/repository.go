@@ -1,9 +1,7 @@
 package workflow
 
 import (
-	"log"
-
-	"github.com/satori/go.uuid"
+	"fmt"
 )
 
 // "fmt"
@@ -13,7 +11,9 @@ import (
 // "gopkg.in/mgo.v2/bson"
 
 //Repository ...
-type Repository struct{}
+type Repository struct {
+	MockWorkflows []Workflow
+}
 
 // SERVER the DB server
 // const SERVER = "mongodb://gautam:gautam@ds157233.mlab.com:57233/dummystore"
@@ -27,7 +27,7 @@ type Repository struct{}
 // var productId = 10
 
 // GetProducts returns the list of Products
-func (r Repository) GetWorkflows() []Workflow {
+func (r *Repository) GetWorkflows() []Workflow {
 	// session, err := mgo.Dial(SERVER)
 
 	// if err != nil {
@@ -37,29 +37,29 @@ func (r Repository) GetWorkflows() []Workflow {
 	// defer session.Close()
 
 	// c := session.DB(DBNAME).C(COLLECTION)
-	workflows := []Workflow{}
-	u1, err := uuid.NewV4()
-	if err != nil {
-		log.Fatal("Something went wrong: %s", err)
-	}
 
-	u2, err := uuid.NewV4()
-	if err != nil {
-		log.Fatal("Something went wrong: %s", err)
-	}
+	// u1, err := uuid.NewV4()
+	// if err != nil {
+	// 	log.Fatal("Something went wrong: %s", err)
+	// }
 
-	s1 := []string{"step 01"}
-	s2 := []string{"step 01", "step 02"}
-	w1 := Workflow{UUID: u1, Status: Inserted, Steps: s1}
-	w2 := Workflow{UUID: u2, Status: Consumed, Steps: s2}
+	// u2, err := uuid.NewV4()
+	// if err != nil {
+	// 	log.Fatal("Something went wrong: %s", err)
+	// }
 
-	workflows = append(workflows, w1)
-	workflows = append(workflows, w2)
+	// s1 := []string{"step 01"}
+	// s2 := []string{"step 01", "step 02"}
+	// w1 := Workflow{UUID: u1, Status: Inserted, Steps: s1}
+	// w2 := Workflow{UUID: u2, Status: Consumed, Steps: s2}
+
+	// r.MockWorkflows = append(r.MockWorkflows, w1)
+	// r.MockWorkflows = append(r.MockWorkflows, w2)
 
 	// 	if err := c.Find(nil).All(&results); err != nil {
 	// 		fmt.Println("Failed to write results:", err)
 	// 	}
-	return workflows
+	return r.MockWorkflows
 }
 
 // GetProductById returns a unique Product
@@ -114,26 +114,26 @@ func (r Repository) GetWorkflows() []Workflow {
 // 	return result
 // }
 
-// // AddProduct adds a Product in the DB
-// func (r Repository) AddProduct(product Product) bool {
-// 	session, err := mgo.Dial(SERVER)
-// 	defer session.Close()
+// AddWorkflow adds a Workflow in the DB
+func (r *Repository) AddWorkflow(workflow Workflow) bool {
 
-// 	productId += 1
-// 	product.ID = productId
-// 	session.DB(DBNAME).C(COLLECTION).Insert(product)
-// 	if err != nil {
-// 		log.Fatal(err)
-// 		return false
-// 	}
+	// session, err := mgo.Dial(SERVER)
+	// defer session.Close()
 
-// 	fmt.Println("Added New Product ID- ", product.ID)
+	// productId += 1
+	// product.ID = productId session.DB(DBNAME).C(COLLECTION).Insert(product)
+	// if err != nil {
+	// 	log.Fatal(err)
+	// 	return false
+	// }
 
-// 	return true
-// }
+	r.MockWorkflows = append(r.MockWorkflows, workflow)
+	fmt.Println("Added New Product ID- ", workflow.UUID)
 
-// // UpdateProduct updates a Product in the DB
-// func (r Repository) UpdateProduct(product Product) bool {
+	return true
+}
+
+// // UpdateProduct updates a Product in the DB func (r Repository) UpdateProduct(product Product) bool {
 // 	session, err := mgo.Dial(SERVER)
 // 	defer session.Close()
 
