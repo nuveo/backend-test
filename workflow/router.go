@@ -30,7 +30,7 @@ var routes = Routes{
 	Route{
 		"Index",
 		"GET",
-		"/",
+		"/workflow",
 		controller.Index,
 	}}
 

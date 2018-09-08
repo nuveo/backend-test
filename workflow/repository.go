@@ -1,5 +1,11 @@
 package workflow
 
+import (
+	"log"
+
+	"github.com/satori/go.uuid"
+)
+
 // "fmt"
 // "log"
 // "strings"
@@ -32,8 +38,20 @@ func (r Repository) GetWorkflows() []Workflow {
 
 	// c := session.DB(DBNAME).C(COLLECTION)
 	workflows := []Workflow{}
-	w1 := Workflow{Id: 1}
-	w2 := Workflow{Id: 2}
+	u1, err := uuid.NewV4()
+	if err != nil {
+		log.Fatal("Something went wrong: %s", err)
+	}
+
+	u2, err := uuid.NewV4()
+	if err != nil {
+		log.Fatal("Something went wrong: %s", err)
+	}
+
+	s1 := []string{"step 01"}
+	s2 := []string{"step 01", "step 02"}
+	w1 := Workflow{UUID: u1, Status: Inserted, Steps: s1}
+	w2 := Workflow{UUID: u2, Status: Consumed, Steps: s2}
 
 	workflows = append(workflows, w1)
 	workflows = append(workflows, w2)
