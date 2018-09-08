@@ -17,7 +17,8 @@ func main() {
 		log.Fatal("$PORT must be set")
 	}
 
-	router := workflow.NewRouter() // create routes
+	//Crate routes
+	router := workflow.NewRouter()
 
 	// These two lines are important in order to allow access from the front-end side to the methods
 	allowedOrigins := handlers.AllowedOrigins([]string{"*"})

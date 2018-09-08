@@ -1,0 +1,2 @@
+CREATE SCHEMA nuveo
+    AUTHORIZATION nuveo;

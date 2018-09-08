@@ -1,4 +1,3 @@
-
 create table nuveo.workflow(workflow_id serial not null,
                             uuid uuid not null,
                             status smallint not null,

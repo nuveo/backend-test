@@ -16,7 +16,7 @@ import (
 // }
 
 type Exception struct {
-	message string `json:"message"`
+	Message string `json:"message"`
 }
 
 type WorkflowStatus int
@@ -32,7 +32,7 @@ func (status WorkflowStatus) String() string {
 		"Inserted",
 		"Consumed"}
 
-	if status != Inserted || status != Consumed {
+	if status != Inserted && status != Consumed {
 		return "Unknown"
 	}
 	return statusName[status]

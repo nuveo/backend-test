@@ -25,7 +25,7 @@ var routes = Routes{
 		"[GET]: /workflow - List all workflows",
 		"GET",
 		"/workflow",
-		controller.Index,
+		controller.ListWorkflows,
 	},
 
 	Route{
@@ -33,7 +33,23 @@ var routes = Routes{
 		"POST",
 		"/workflow",
 		controller.AddWorkflow,
+	},
+
+	Route{
+		"[PATCH]: /workflow/{UUID} - Update status from specific workflow",
+		"PATCH",
+		"/workflow",
+		controller.UpdateWorkflow,
+	},
+
+	Route{
+		"[GET]: /consume - Consume a workflow from queue and generete a CSV file with workflow.Data",
+		"GET",
+		"/consume",
+		controller.ConsumeWorkflows,
 	}}
+
+// ,
 
 // ,
 // Route{

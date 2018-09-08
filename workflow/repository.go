@@ -133,21 +133,30 @@ func (r *Repository) AddWorkflow(workflow Workflow) bool {
 	return true
 }
 
-// // UpdateProduct updates a Product in the DB func (r Repository) UpdateProduct(product Product) bool {
-// 	session, err := mgo.Dial(SERVER)
-// 	defer session.Close()
+// UpdateProduct updates a Product in the DB
+func (r *Repository) UpdateWorkflow(workflowNew Workflow) bool {
+	// session, err := mgo.Dial(SERVER)
+	// defer session.Close()
 
-// 	err = session.DB(DBNAME).C(COLLECTION).UpdateId(product.ID, product)
+	// err = session.DB(DBNAME).C(COLLECTION).UpdateId(product.ID, product)
 
-// 	if err != nil {
-// 		log.Fatal(err)
-// 		return false
-// 	}
+	// if err != nil {
+	// 	log.Fatal(err)
+	// 	return false
+	// }
 
-// 	fmt.Println("Updated Product ID - ", product.ID)
+	for _, element := range r.MockWorkflows {
 
-// 	return true
-// }
+		if element.UUID == workflowNew.UUID {
+
+			element.Status = workflowNew.Status
+		}
+
+	}
+	fmt.Println("Updated Workflow UUID - ", workflowNew.UUID)
+
+	return true
+}
 
 // // DeleteProduct deletes an Product
 // func (r Repository) DeleteProduct(id int) string {
@@ -164,3 +173,39 @@ func (r *Repository) AddWorkflow(workflow Workflow) bool {
 // 	// Write status
 // 	return "OK"
 // }
+
+// Consume by Queue and returns the list of workflows
+func (r *Repository) ConsumeWorkflows() []Workflow {
+	// session, err := mgo.Dial(SERVER)
+
+	// if err != nil {
+	// 	fmt.Println("Failed to establish connection to Mongo server:", err)
+	// }
+
+	// defer session.Close()
+
+	// c := session.DB(DBNAME).C(COLLECTION)
+
+	// u1, err := uuid.NewV4()
+	// if err != nil {
+	// 	log.Fatal("Something went wrong: %s", err)
+	// }
+
+	// u2, err := uuid.NewV4()
+	// if err != nil {
+	// 	log.Fatal("Something went wrong: %s", err)
+	// }
+
+	// s1 := []string{"step 01"}
+	// s2 := []string{"step 01", "step 02"}
+	// w1 := Workflow{UUID: u1, Status: Inserted, Steps: s1}
+	// w2 := Workflow{UUID: u2, Status: Consumed, Steps: s2}
+
+	// r.MockWorkflows = append(r.MockWorkflows, w1)
+	// r.MockWorkflows = append(r.MockWorkflows, w2)
+
+	// 	if err := c.Find(nil).All(&results); err != nil {
+	// 		fmt.Println("Failed to write results:", err)
+	// 	}
+	return r.MockWorkflows
+}
