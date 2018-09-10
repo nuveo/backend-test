@@ -11,7 +11,7 @@ primary key (workflow_id);
 
 alter table nuveo.workflow
 add constraint uq_workflow_uuid
-unique(workflow_id);
+unique(uuid);
 
 alter table nuveo.workflow
 add constraint chk_workflow_status

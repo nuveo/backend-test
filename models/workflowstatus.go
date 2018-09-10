@@ -20,3 +20,9 @@ func (status WorkflowStatus) String() string {
 	}
 	return statusName[status]
 }
+
+//Value ...
+func (status WorkflowStatus) Value() int {
+
+	return int(status)
+}

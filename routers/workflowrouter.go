@@ -40,7 +40,7 @@ var routes = Routes{
 	Route{
 		"[PATCH]: /workflow/{UUID} - Update status from specific workflow",
 		"PATCH",
-		"/workflow",
+		"/workflow/{UUID}",
 		controller.UpdateWorkflow,
 	},
 
@@ -50,43 +50,6 @@ var routes = Routes{
 		"/consume",
 		controller.ConsumeWorkflows,
 	}}
-
-// ,
-
-// ,
-// Route{
-// 	"AddProduct",
-// 	"POST",
-// 	"/AddProduct",
-// 	AuthenticationMiddleware(controller.AddProduct),
-// },
-// Route{
-// 	"UpdateProduct",
-// 	"PUT",
-// 	"/UpdateProduct",
-// 	AuthenticationMiddleware(controller.UpdateProduct),
-// },
-// // Get Product by {id}
-// Route{
-// 	"GetProduct",
-// 	"GET",
-// 	"/products/{id}",
-// 	controller.GetProduct,
-// },
-// // Delete Product by {id}
-// Route{
-// 	"DeleteProduct",
-// 	"DELETE",
-// 	"/deleteProduct/{id}",
-// 	AuthenticationMiddleware(controller.DeleteProduct),
-// },
-// // Search product with string
-// Route{
-// 	"SearchProduct",
-// 	"GET",
-// 	"/Search/{query}",
-// 	controller.SearchProduct,
-// }}
 
 // NewRouter configures a new router to the API
 func NewRouter() *mux.Router {

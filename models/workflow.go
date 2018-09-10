@@ -12,7 +12,7 @@ type Workflow struct {
 	UUID   uuid.UUID       `json:"uuid"`
 	Status WorkflowStatus  `json:"status"`
 	Data   json.RawMessage `json:"data"`
-i	Steps  pq.StringArray  `json: "steps" gorm:"type:text[]"`
+	Steps  pq.StringArray  `json:"steps" gorm:"type:text[]"`
 }
 
 // TableName set Workflow's table name to be `workflow`

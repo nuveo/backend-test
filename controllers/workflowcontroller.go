@@ -9,6 +9,8 @@ import (
 	"log"
 	"net/http"
 
+	//"strings"
+
 	"github.com/gorilla/mux"
 	uuid "github.com/satori/go.uuid"
 )
@@ -103,18 +105,20 @@ func (c *Controller) UpdateWorkflow(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	uuidValue := vars["uuid"] // param id
-	log.Println(uuidValue)
+	//uuidValue := strings.Replace(vars["uuid"], "-", "", -1) // param id
+	uuidValue := vars["UUID"]
+	log.Println("Parsed UUID:" + uuidValue)
 
-	uuidWorflow, err := uuid.FromString(uuidValue)
+	uuidWorkflow, err := uuid.FromString(uuidValue)
 	if err != nil {
 		log.Fatalln("Something went wrong:", err)
 	}
 	log.Println(workflow.UUID)
 
 	// updates the product in the DB
-	workflow.UUID = uuidWorflow
-	success := c.Repo.Save(workflow)
+	workflow.UUID = uuidWorkflow
+	log.Println(workflow)
+	success := c.Repo.Update(workflow)
 
 	if !success {
 		w.WriteHeader(http.StatusInternalServerError)
