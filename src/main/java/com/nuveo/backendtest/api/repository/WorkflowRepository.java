@@ -3,17 +3,18 @@
  */
 package com.nuveo.backendtest.api.repository;
 
-import java.util.UUID;
-
 import com.nuveo.backendtest.api.entity.Workflow;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
 
 /**
  * @author rsouza
  *
  */
 
-public interface WorkflowRepository {
+@Repository
+public interface WorkflowRepository extends JpaRepository<Workflow, String > {
 	
-	Workflow findByUuid(UUID uuid);
+	Workflow findByUuid(String uuid);
 
 }

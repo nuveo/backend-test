@@ -3,14 +3,15 @@
  */
 package com.nuveo.backendtest.api.entity;
 
-import java.util.Arrays;
+import java.util.List;
 import java.util.UUID;
 
+import javax.persistence.*;
+
 import javax.validation.constraints.NotEmpty;
+import javax.persistence.Id;
 
-import org.hibernate.validator.constraints.NotBlank;
-import org.springframework.data.annotation.Id;
-
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.nuveo.backendtest.enums.WorkflowStatus;
 
 /**
@@ -18,35 +19,58 @@ import com.nuveo.backendtest.enums.WorkflowStatus;
  *
  */
 
-public class Workflow {
+@Entity
+@Table(name = "tb_workflow")
+public class Workflow extends AuditModel {
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 2067258313899027162L;
 
 	/** Workflow unique indentifier*/
-	@Id
-	protected UUID uuid;	
+    @Id
+	protected String uuid;	
 	
 	/** workflow Status*/
-	@NotEmpty
+    @Enumerated
+    @Column(columnDefinition = "smallint")
 	protected WorkflowStatus status;
 
 	/** JSONB	workflow input */
 	@NotEmpty
+    @Column(columnDefinition = "text")
 	protected String data;
-	
-	/** name of workflow steps */
-	@NotEmpty
-	protected String[] steps;
+
+	@OneToMany(mappedBy="workflow")
+	@JsonIgnore	
+	protected List<Step> steps;
+
+	/**
+	 * @return the steps
+	 */
+	public List<Step> getSteps() {
+		return steps;
+	}
+
+	/**
+	 * @param steps the steps to set
+	 */
+	public void setSteps(List<Step> steps) {
+		this.steps = steps;
+	}
 
 	/**
 	 * @return the uuid
 	 */
-	public UUID getUuid() {
+	public String getUuid() {
 		return uuid;
 	}
 
 	/**
 	 * @param uuid the uuid to set
 	 */
-	public void setUuid(UUID uuid) {
+	public void setUuid(String uuid) {
 		this.uuid = uuid;
 	}
 
@@ -78,46 +102,29 @@ public class Workflow {
 		this.data = data;
 	}
 
-	/**
-	 * @return the steps
-	 */
-	public String[] getSteps() {
-		return steps;
-	}
-
-	/**
-	 * @param steps the steps to set
-	 */
-	public void setSteps(String[] steps) {
-		this.steps = steps;
-	}
-
 	/* (non-Javadoc)
 	 * @see java.lang.Object#toString()
 	 */
 	@Override
 	public String toString() {
-		return "Workflow [uuid=" + uuid + ", status=" + status + ", data=" + data + ", steps=" + Arrays.toString(steps)
+		return "Workflow [uuid=" + uuid + ", status=" + status + ", data=" + data
 				+ "]";
 	}
 
-	public Workflow(WorkflowStatus pStatus, String pData, String[] pSteps) {
+	public Workflow() {
+	}
+	
+	public Workflow(WorkflowStatus pStatus, String pData) {
 		super();
-		this.uuid = UUID.randomUUID();
+		this.uuid = UUID.randomUUID().toString();
 		this.status = pStatus;
 		this.data = pData;
-		this.steps = pSteps;
 	}
 
-	public Workflow(UUID pUUID, WorkflowStatus pStatus, String pData, String[] pSteps) {
+	public Workflow(String pUUID, WorkflowStatus pStatus, String pData) {
 		super();
 		this.uuid = pUUID;
 		this.status = pStatus;
 		this.data = pData;
-		this.steps = pSteps;
 	}
-	
-	
-	
-
 }

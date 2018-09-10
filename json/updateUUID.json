@@ -1,0 +1,9 @@
+{
+	"uuid":"d632e0cf-1702-428c-bde6-b77f4949098a",
+	"status":1,
+	"data":"{ \"user-id\": \"21\", \"date\": \"2018-01-03\" }",
+	"steps": [
+		{ "id":"1", "description": "step 1.1" },
+		{ "id":"2", "description": "step 2.1" }
+	]
+}

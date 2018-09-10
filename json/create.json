@@ -1,0 +1,8 @@
+{
+	"status":1,
+	"data":"{ \"user-id\": \"12\", \"date\": \"2018-03-01\" }",
+	"steps": [
+		{ "id":"1", "description": "step 1" },
+		{ "id":"2", "description": "step 2" }
+	]
+}
