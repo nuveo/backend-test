@@ -9,7 +9,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
-var db = repositories.NewConnection()
+var db, _ = repositories.NewConnection()
 var repo = &repositories.PostgresRepository{Db: db}
 var controller = &controllers.Controller{Repo: repo}
 

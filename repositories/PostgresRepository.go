@@ -3,7 +3,6 @@ package repositories
 import (
 	"backend-test/models"
 	"fmt"
-	"log"
 
 	"github.com/jinzhu/gorm"
 	"github.com/satori/go.uuid"
@@ -28,65 +27,50 @@ type PostgresRepository struct {
 }
 
 //NewConnection ...
-func NewConnection() *gorm.DB {
+func NewConnection() (*gorm.DB, error) {
 
 	dbConn, err := gorm.Open("postgres", dns)
-
 	dbConn.LogMode(true)
-
-	if err != nil {
-
-		log.Fatalln("Error in connect to database", err)
-	}
-
-	return dbConn
-
+	// if err != nil {
+	// 	log.Fatalln("Error in connect to database", err)
+	// }
+	return dbConn, err
 }
 
 // FindAll returns the list of worflow
-func (r PostgresRepository) FindAll() []models.Workflow {
+func (r PostgresRepository) FindAll() ([]models.Workflow, error) {
 
 	var workflow []models.Workflow
-	r.Db.Find(&workflow)
-
-	return workflow
+	err := r.Db.Find(&workflow).Error
+	return workflow, err
 }
 
 // Save adds a Workflow in the DB
-func (r *PostgresRepository) Save(workflow models.Workflow) bool {
+func (r *PostgresRepository) Save(workflow models.Workflow) (models.Workflow, error) {
 
-	r.Db.Save(&workflow)
-	fmt.Println("Added New Product ID- ", workflow.UUID)
-	return true
+	err := r.Db.Save(&workflow).Error
+	return workflow, err
 }
 
 //Update adds a Workflow in the DB
-func (r PostgresRepository) Update(workflowNew models.Workflow) bool {
+func (r PostgresRepository) Update(workflowNew models.Workflow) (models.Workflow, error) {
 
-	fmt.Println("New Status Updated: ", workflowNew.Status.Value())
-	errUpdate := r.Db.Model(&workflowNew).Where("uuid = ?", workflowNew.UUID).Update("status", workflowNew.Status).Error
-
-	if errUpdate != nil {
-
-		log.Fatalln("Error in insert data", errUpdate)
-
-		return false
-	}
-	return true
+	err := r.Db.Model(&workflowNew).Where("uuid = ?", workflowNew.UUID).Update("status", workflowNew.Status).Error
+	return workflowNew, err
 }
 
 // FindByUUID finds a Workflow by UUID
-func (r PostgresRepository) FindByUUID(uuidValue uuid.UUID) models.Workflow {
+func (r PostgresRepository) FindByUUID(uuidValue uuid.UUID) (models.Workflow, error) {
 
 	var workflow models.Workflow
-	r.Db.Where("uuid = ?", uuidValue).First(&workflow)
-	return workflow
+	err := r.Db.Where("uuid = ?", uuidValue).First(&workflow).Error
+	return workflow, err
 }
 
 //ConsumeFromQueue by Queue and returns the list of workflows
-func (r PostgresRepository) ConsumeFromQueue() []models.Workflow {
+func (r PostgresRepository) ConsumeFromQueue() ([]models.Workflow, error) {
 
 	var workflow []models.Workflow
-	r.Db.Find(&workflow)
-	return workflow
+	err := r.Db.Find(&workflow).Error
+	return workflow, err
 }

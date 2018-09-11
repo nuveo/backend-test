@@ -1,6 +1,6 @@
 package exceptions
 
-//Exception is a customized exception to workflow-api
-type Exception struct {
+//WorkflowException is a customized exception to workflow-api
+type WorkflowException struct {
 	Message string `json:"message"`
 }

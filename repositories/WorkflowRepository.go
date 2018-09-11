@@ -8,9 +8,9 @@ import (
 
 //WorkflowRepository ...
 type WorkflowRepository interface {
-	FindAll() []models.Workflow
-	FindByUUID(uuid.UUID) models.Workflow
-	Save(models.Workflow) bool
-	Update(workflowNew models.Workflow) bool
-	ConsumeFromQueue() []models.Workflow
+	FindAll() ([]models.Workflow, error)
+	FindByUUID(uuid.UUID) (models.Workflow, error)
+	Save(models.Workflow) (models.Workflow, error)
+	Update(workflowNew models.Workflow) (models.Workflow, error)
+	ConsumeFromQueue() ([]models.Workflow, error)
 }
