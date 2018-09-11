@@ -13,27 +13,41 @@ import (
 )
 
 // SERVER the DB server
-const SERVER = "host=192.168.99.100 port=5432 user=nuveo dbname=nuveo password=nuveo sslmode=disable"
+var host = "localhost"
+var port = "5432"
+var user = "nuveo"
+var dbname = "nuveo"
+var password = "nuveo"
+var sslmode = "disable"
+
+var dns = fmt.Sprintf("host=%s port=%s user=%s dbname=%s password=%s sslmode=%s", host, port, user, dbname, password, sslmode)
 
 //PostgresRepository ...
 type PostgresRepository struct {
-	_data []models.Workflow
+	Db *gorm.DB
 }
 
-// FindAll returns the list of worflow
-func (r PostgresRepository) FindAll() []models.Workflow {
-	db, err := gorm.Open("postgres", SERVER)
+//NewConnection ...
+func NewConnection() *gorm.DB {
 
-	db.LogMode(true)
+	dbConn, err := gorm.Open("postgres", dns)
+
+	dbConn.LogMode(true)
 
 	if err != nil {
 
 		log.Fatalln("Error in connect to database", err)
 	}
-	defer db.Close()
+
+	return dbConn
+
+}
+
+// FindAll returns the list of worflow
+func (r PostgresRepository) FindAll() []models.Workflow {
 
 	var workflow []models.Workflow
-	db.Find(&workflow)
+	r.Db.Find(&workflow)
 
 	return workflow
 }
@@ -41,36 +55,16 @@ func (r PostgresRepository) FindAll() []models.Workflow {
 // Save adds a Workflow in the DB
 func (r *PostgresRepository) Save(workflow models.Workflow) bool {
 
-	db, err := gorm.Open("postgres", SERVER)
-
-	db.LogMode(true)
-
-	if err != nil {
-
-		log.Fatalln("Error in connect to database", err)
-	}
-	defer db.Close()
-
-	db.Save(&workflow)
+	r.Db.Save(&workflow)
 	fmt.Println("Added New Product ID- ", workflow.UUID)
-
 	return true
 }
 
 //Update adds a Workflow in the DB
 func (r PostgresRepository) Update(workflowNew models.Workflow) bool {
 
-	db, err := gorm.Open("postgres", SERVER)
 	fmt.Println("New Status Updated: ", workflowNew.Status.Value())
-	db.LogMode(true)
-
-	if err != nil {
-
-		log.Fatalln("Error in connect to database", err)
-		return false
-	}
-	defer db.Close()
-	errUpdate := db.Model(&workflowNew).Where("uuid = ?", workflowNew.UUID).Update("status", workflowNew.Status).Error
+	errUpdate := r.Db.Model(&workflowNew).Where("uuid = ?", workflowNew.UUID).Update("status", workflowNew.Status).Error
 
 	if errUpdate != nil {
 
@@ -85,21 +79,14 @@ func (r PostgresRepository) Update(workflowNew models.Workflow) bool {
 func (r PostgresRepository) FindByUUID(uuidValue uuid.UUID) models.Workflow {
 
 	var workflow models.Workflow
-	db, err := gorm.Open("postgres", SERVER)
-
-	db.LogMode(true)
-
-	if err != nil {
-
-		log.Fatalln("Error in connect to database", err)
-	}
-	defer db.Close()
-
-	db.Where("uuid = ?", uuidValue).First(&workflow)
+	r.Db.Where("uuid = ?", uuidValue).First(&workflow)
 	return workflow
 }
 
 //ConsumeFromQueue by Queue and returns the list of workflows
 func (r PostgresRepository) ConsumeFromQueue() []models.Workflow {
-	return r._data
+
+	var workflow []models.Workflow
+	r.Db.Find(&workflow)
+	return workflow
 }

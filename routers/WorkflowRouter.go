@@ -9,7 +9,9 @@ import (
 	"github.com/gorilla/mux"
 )
 
-var controller = &controllers.Controller{Repo: &repositories.PostgresRepository{}}
+var db = repositories.NewConnection()
+var repo = &repositories.PostgresRepository{Db: db}
+var controller = &controllers.Controller{Repo: repo}
 
 // Route defines a route
 type Route struct {

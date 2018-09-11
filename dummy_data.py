@@ -10,7 +10,7 @@ import string
 
 def generate_dummy_data():
     MAX_REGISTERS = 100
-    host = "192.168.99.100"
+    host = "localhost"
     dbname = "nuveo"
     user = "nuveo"
     password = "nuveo"

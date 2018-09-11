@@ -9,10 +9,8 @@ import (
 	"log"
 	"net/http"
 
-	//"strings"
-
 	"github.com/gorilla/mux"
-	uuid "github.com/satori/go.uuid"
+	"github.com/satori/go.uuid"
 )
 
 //Controller ...
