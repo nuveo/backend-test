@@ -19,20 +19,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.nuveo.backendtest.api.services.WorkflowService;
-import com.nuveo.backendtest.helper.sqs.SQSReader;
 import com.nuveo.backendtest.api.entity.Workflow;
 import com.nuveo.backendtest.api.response.Response;
-import com.amazonaws.services.sqs.model.Message;
-
-import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
-
-
-import com.fasterxml.jackson.core.JsonGenerationException;
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.databind.JsonMappingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * @author rsouza
@@ -129,9 +119,6 @@ public class WorkflowController  {
 			
 			response.setData(workflowPersisted);
 			
-		} catch (DuplicateKeyException dke) {
-			response.getErrors().add("Workflow already inserted");
-			return ResponseEntity.badRequest().body(response);
 		} catch (Exception dke) {
 			return ResponseEntity.badRequest().body(response);
 		}
@@ -150,9 +137,6 @@ public class WorkflowController  {
 			
 			response.setData(workflowFromQueue);
 			
-		} catch (DuplicateKeyException dke) {
-			response.getErrors().add("Workflow already inserted");
-			return ResponseEntity.badRequest().body(response);
 		} catch (Exception dke) {
 			return ResponseEntity.badRequest().body(response);
 		}

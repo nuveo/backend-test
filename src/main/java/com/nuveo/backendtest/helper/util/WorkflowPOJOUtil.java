@@ -4,16 +4,13 @@
 package com.nuveo.backendtest.helper.util;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectWriter;
-import com.fasterxml.jackson.dataformat.csv.CsvMapper;
-import com.fasterxml.jackson.dataformat.csv.CsvSchema;
 import com.nuveo.backendtest.api.entity.Workflow;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.json.CDL;
 
 /**
  * @author rsouza
@@ -21,6 +18,8 @@ import com.nuveo.backendtest.api.entity.Workflow;
  */
 
 public class WorkflowPOJOUtil {
+
+    static String jsonArrayFmt = "{\"jsonObject\": [ %s ]}";
 
 	public static Workflow deserializeMessage(String messageBody) throws IOException {
 		
@@ -31,56 +30,23 @@ public class WorkflowPOJOUtil {
 		return workflow;
 	}
 	
-	public static String serializeWorkflowAsCSV(Workflow workflow)
+	public static String JSON2CSV(String jsonString)
 	{
+		
+		String csv = null;
+		
 		try {
-			
-		    List<Workflow> wkfList = new ArrayList<>();
-		    wkfList.add(workflow);
-		    
-		    List<String> csvList = WorkflowPOJOUtil.convertToString(wkfList);
-		    
-		    if(csvList != null && csvList.size() > 0) {
-		    	return csvList.get(0);
-		    }
-		    else 
-		    	return null;
+			JSONObject output = new JSONObject(String.format(jsonArrayFmt, jsonString));
+		
+		    JSONArray docs = output.getJSONArray("jsonObject");
+		
+		    csv = CDL.toString(docs);
 
-		} catch (Exception e) {
-	    	return null;
+		} catch (JSONException e) {
+		    e.printStackTrace();
 		}
+
+		return csv;
 	}
 
-	//Got from https://stackoverflow.com/questions/41510496/writing-generic-pojo-to-csv-transformer
-	public static <T> List<String> convertToString(List<T> objectList) {
-
-	    if(objectList.isEmpty())
-	        return Collections.emptyList();
-
-	    T entry = objectList.get(0);
-
-	    List<String> stringList = new ArrayList<>();
-	    char delimiter = ',';
-	    char quote = '"';
-	    String lineSep = "\n";
-
-	    CsvMapper mapper = new CsvMapper();
-	    CsvSchema schema = mapper.schemaFor(entry.getClass());
-
-	    for (T object : objectList) {
-
-	        try {
-	            String csv = mapper.writer(schema
-	                    .withColumnSeparator(delimiter)
-	                    .withQuoteChar(quote)
-	                    .withLineSeparator(lineSep)).writeValueAsString(object);
-
-	            stringList.add(csv);
-	        } catch (JsonProcessingException e) {
-	            System.out.println(e);
-	        }
-	    }
-
-	    return stringList;
-	}	
 }
