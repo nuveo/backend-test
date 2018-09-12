@@ -152,11 +152,6 @@ public class WorkflowController  {
 		try {
 
 			String objSqsAsCSV = service.consume();
-			
-			if(objSqsAsCSV == null || objSqsAsCSV.isEmpty())
-			{
-				return ResponseEntity.badRequest().body(response);
-			}
 
 			response.setData(objSqsAsCSV);
 
