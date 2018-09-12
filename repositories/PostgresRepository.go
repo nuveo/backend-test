@@ -2,10 +2,13 @@ package repositories
 
 import (
 	"backend-test/models"
+	"encoding/json"
 	"fmt"
+	"log"
 
 	"github.com/jinzhu/gorm"
 	"github.com/satori/go.uuid"
+	"github.com/streadway/amqp"
 
 	//
 	_ "github.com/jinzhu/gorm/dialects/postgres"
@@ -53,7 +56,7 @@ func (r *PostgresRepository) Save(workflow models.Workflow) (models.Workflow, er
 }
 
 //Update adds a Workflow in the DB
-func (r PostgresRepository) Update(workflowNew models.Workflow) (models.Workflow, error) {
+func (r *PostgresRepository) Update(workflowNew models.Workflow) (models.Workflow, error) {
 
 	err := r.Db.Model(&workflowNew).Where("uuid = ?", workflowNew.UUID).Update("status", workflowNew.Status).Error
 	return workflowNew, err
@@ -70,7 +73,46 @@ func (r PostgresRepository) FindByUUID(uuidValue uuid.UUID) (models.Workflow, er
 //ConsumeFromQueue by Queue and returns the list of workflows
 func (r PostgresRepository) ConsumeFromQueue() ([]models.Workflow, error) {
 
-	var workflow []models.Workflow
-	err := r.Db.Find(&workflow).Error
-	return workflow, err
+	workflowList := []models.Workflow{}
+	var workflow models.Workflow
+	conn, err := amqp.Dial("amqp://guest:guest@localhost:5672/")
+	defer conn.Close()
+
+	ch, err := conn.Channel()
+	defer ch.Close()
+
+	q, err := ch.QueueDeclare(
+		"nuveo", // name
+		false,   // durable
+		false,   // delete when unused
+		false,   // exclusive
+		false,   // no-wait
+		nil,     // arguments
+	)
+	msgs, err := ch.Consume(
+		q.Name,         // queue
+		"workflow-api", // consumer
+		true,           // auto-ack
+		false,          // exclusive
+		false,          // no-local
+		false,          // no-wait
+		nil,            // args
+	)
+
+	for d := range msgs {
+
+		if err := json.Unmarshal(d.Body, &workflow); err != nil {
+			log.Println(err)
+		}
+		err := d.Ack(false)
+		if err != nil {
+			fmt.Println(err)
+		}
+		workflow.Status = models.Consumed
+		log.Println(workflow)
+		workflowList = append(workflowList, workflow)
+		r.Update(workflow)
+	}
+	log.Println(len(workflowList))
+	return workflowList, err
 }

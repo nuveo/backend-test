@@ -155,13 +155,12 @@ func (c *Controller) UpdateWorkflow(w http.ResponseWriter, r *http.Request) {
 
 // ConsumeWorkflows GET /consume
 func (c *Controller) ConsumeWorkflows(w http.ResponseWriter, r *http.Request) {
-	workflows, err := c.Repo.ConsumeFromQueue() // list of all products
+	workflows, err := c.Repo.ConsumeFromQueue()
 	if err != nil {
 		data, _ := json.Marshal(exceptions.WorkflowException{Message: err.Error()})
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write(data)
 		return
-
 	}
 	data, _ := json.Marshal(workflows)
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")

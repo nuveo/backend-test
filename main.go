@@ -1,5 +1,5 @@
 // Entrypoint for API
-package qm
+package main
 
 import (
 	"backend-test/routers"

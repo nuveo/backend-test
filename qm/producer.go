@@ -3,6 +3,7 @@ package main
 
 import (
 	"backend-test/models"
+	"encoding/json"
 	"fmt"
 	"log"
 
@@ -40,7 +41,7 @@ func main() {
 	defer ch.Close()
 
 	q, err := ch.QueueDeclare(
-		"hello", // name
+		"nuveo", // name
 		false,   // durable
 		false,   // delete when unused
 		false,   // exclusive
@@ -52,9 +53,11 @@ func main() {
 	var workflows []models.Workflow
 	err = db.Find(&workflows).Where(models.Inserted).Error
 
-	for _, element := range workflows {
+	for _, workflow := range workflows {
 
-		body := element.Data
+		body, err := json.Marshal(workflow)
+
+		failOnError(err, "Failed to declare a queue")
 
 		err = ch.Publish(
 			"",     // exchange
@@ -62,7 +65,7 @@ func main() {
 			false,  // mandatory
 			false,  // immediate
 			amqp.Publishing{
-				ContentType: "text/plain",
+				ContentType: "text/json",
 				Body:        []byte(body),
 			})
 		log.Printf(" [x] Sent %s", body)
