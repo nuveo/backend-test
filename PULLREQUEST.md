@@ -2,6 +2,8 @@
 
 Procurei codificar o teste levando em consideração as boas práticas de desenvolvimento, como a distinção de responsabilidade em camadas.
 
+A aplicação foi desenvolvida como uma aplicação Spring-boot, arquitetura java recomendada para microserviços.
+
 Algumas funcionalidades ficaram de fora por absoluta falta de tempo (mas essenciais em produtos finalizados), como:
 
 - Logs.
