@@ -13,4 +13,4 @@ Algumas funcionalidades ficaram de fora por absoluta falta de tempo (mas essenci
 
 Foi escolhida o message queue como o AWS-SQS por questões de facilidade de implementação e pelo fato de eu já possuir uma conta AWS para desenvolvimento (idem para o provedor do PostgreSQL).
 
-Segue no projeto um shellscript que faz as vezes do script do Postman.  
+Segue no projeto um shellscript que faz as vezes do script do Postman (callREST.sh). É necessario a instalação do aplicativo cURL para utilização.
