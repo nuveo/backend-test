@@ -1,4 +1,4 @@
-// Entrypoint for API
+// Entrypoint for Workflow API
 package main
 
 import (
@@ -19,10 +19,12 @@ func main() {
 	//Crate routes
 	router := routers.NewRouter()
 
-	// These two lines are important in order to allow access from the front-end side to the methods
+	// These two lines are important in order to allow access from the front-end
+	// side to the methods
 	allowedOrigins := handlers.AllowedOrigins([]string{"*"})
 	allowedMethods := handlers.AllowedMethods([]string{"GET", "POST", "PATH"})
 
 	// Launch server with CORS validations
-	log.Fatal(http.ListenAndServe(":"+port, handlers.CORS(allowedOrigins, allowedMethods)(router)))
+	log.Fatal(http.ListenAndServe(":"+port, handlers.CORS(allowedOrigins,
+		allowedMethods)(router)))
 }

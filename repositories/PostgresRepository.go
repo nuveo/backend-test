@@ -73,7 +73,7 @@ func (r PostgresRepository) FindByUUID(uuidValue uuid.UUID) (models.Workflow, er
 //ConsumeFromQueue by Queue and returns the list of workflows
 func (r PostgresRepository) ConsumeFromQueue() ([]models.Workflow, error) {
 
-	workflowList := []models.Workflow{}
+	// workflowList := []models.Workflow{}
 	var workflow models.Workflow
 	conn, err := amqp.Dial("amqp://guest:guest@localhost:5672/")
 	defer conn.Close()
@@ -92,27 +92,29 @@ func (r PostgresRepository) ConsumeFromQueue() ([]models.Workflow, error) {
 	msgs, err := ch.Consume(
 		q.Name,         // queue
 		"workflow-api", // consumer
-		true,           // auto-ack
+		false,          // auto-ack
 		false,          // exclusive
 		false,          // no-local
-		false,          // no-wait
+		true,           // no-wait
 		nil,            // args
 	)
 
-	for d := range msgs {
+	workflowList := []models.Workflow{}
+	forever := make(chan bool)
+	go func(list *[]models.Workflow) {
+		for d := range msgs {
 
-		if err := json.Unmarshal(d.Body, &workflow); err != nil {
-			log.Println(err)
+			if err := json.Unmarshal(d.Body, &workflow); err != nil {
+				log.Println(err)
+			}
+			workflow.Status = models.Consumed
+			log.Println(workflow)
+			*list = append(*list, workflow)
+			r.Update(workflow)
+			d.Ack(false)
+			log.Println("Tamanho " + string(len(*list)))
 		}
-		err := d.Ack(false)
-		if err != nil {
-			fmt.Println(err)
-		}
-		workflow.Status = models.Consumed
-		log.Println(workflow)
-		workflowList = append(workflowList, workflow)
-		r.Update(workflow)
-	}
-	log.Println(len(workflowList))
+	}(&workflowList)
+	<-forever
 	return workflowList, err
 }
