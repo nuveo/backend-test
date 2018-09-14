@@ -2,6 +2,7 @@
 package main
 
 import (
+	"backend-test/consumers"
 	"backend-test/routers"
 	"log"
 	"net/http"
@@ -18,6 +19,10 @@ func main() {
 	}
 	//Crate routes
 	router := routers.NewRouter()
+
+	//Consumes a workflow item from a queue
+	consumer := consumers.WorkflowConsumer{}
+	go consumer.Run()
 
 	// These two lines are important in order to allow access from the front-end
 	// side to the methods

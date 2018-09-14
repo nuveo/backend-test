@@ -10,6 +10,7 @@ import (
 type WorkflowRepository interface {
 	FindAll() ([]models.Workflow, error)
 	FindByUUID(uuid.UUID) (models.Workflow, error)
+	FindByStatus(status models.WorkflowStatus) ([]models.Workflow, error)
 	Save(models.Workflow) (models.Workflow, error)
 	Update(workflowNew models.Workflow) (models.Workflow, error)
 	ConsumeFromQueue() ([]models.Workflow, error)

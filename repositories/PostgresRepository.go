@@ -2,15 +2,12 @@ package repositories
 
 import (
 	"backend-test/models"
-	"encoding/json"
 	"fmt"
-	"log"
 
 	// "log"
 
 	"github.com/jinzhu/gorm"
 	"github.com/satori/go.uuid"
-	"github.com/streadway/amqp"
 
 	//
 	_ "github.com/jinzhu/gorm/dialects/postgres"
@@ -72,60 +69,17 @@ func (r PostgresRepository) FindByUUID(uuidValue uuid.UUID) (models.Workflow, er
 	return workflow, err
 }
 
+// FindByUUID finds a Workflow by UUID
+func (r PostgresRepository) FindByStatus(status models.WorkflowStatus) ([]models.Workflow, error) {
+
+	var workflowList []models.Workflow
+	err := r.Db.Where("status = ?", status).Find(&workflowList).Error
+	return workflowList, err
+}
+
 //ConsumeFromQueue by Queue and returns the list of workflows
 func (r PostgresRepository) ConsumeFromQueue() ([]models.Workflow, error) {
 
-	// workflowList := []models.Workflow{}
-	var workflow models.Workflow
-	conn, err := amqp.Dial("amqp://guest:guest@localhost:5672/")
-	defer conn.Close()
-
-	ch, err := conn.Channel()
-	defer ch.Close()
-
-	q, err := ch.QueueDeclare(
-		"nuveo", // name
-		false,   // durable
-		false,   // delete when unused
-		false,   // exclusive
-		false,   // no-wait
-		nil,     // argumentsj
-	)
-	deliveries, err := ch.Consume(
-		q.Name,         // queue
-		"workflow-api", // consumer
-		true,           // auto-ack
-		false,          // exclusive
-		false,          // no-local
-		true,           // no-wait
-		nil,            // args
-	)
-
-	workflowList := []models.Workflow{}
-	msgs := make(chan []byte)
-	done := make(chan error)
-
-	go func(deliveries <-chan amqp.Delivery, done chan error, message chan []byte) {
-
-		log.Println("Start reading message")
-		for d := range deliveries {
-			message <- d.Body
-			log.Println("Message was read")
-		}
-		done <- nil
-	}(deliveries, done, msgs)
-	for {
-		if err := json.Unmarshal(<-msgs, &workflow); err != nil {
-			log.Println(err)
-		}
-		workflow.Status = models.Consumed
-		log.Println(workflow)
-		log.Printf("%s\n", <-msgs)
-		workflowList = append(workflowList, workflow)
-		if len(workflowList) > 10 {
-			break
-		}
-	}
-
+	workflowList, err := r.FindByStatus(models.Consumed)
 	return workflowList, err
 }

@@ -51,6 +51,8 @@ func main() {
 	failOnError(err, "Failed to declare a queue")
 
 	var workflows []models.Workflow
+	const MAXPRODUCTION int = 10
+	var itensProduced int = 0
 	err = db.Find(&workflows).Where(models.Inserted).Error
 
 	for _, workflow := range workflows {
@@ -70,5 +72,9 @@ func main() {
 			})
 		log.Printf(" [x] Sent %s", body)
 		failOnError(err, "Failed to publish a message")
+		itensProduced++
+		if itensProduced >= MAXPRODUCTION {
+			break
+		}
 	}
 }
