@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"log"
 
+	// "log"
+
 	"github.com/jinzhu/gorm"
 	"github.com/satori/go.uuid"
 	"github.com/streadway/amqp"
@@ -55,7 +57,7 @@ func (r *PostgresRepository) Save(workflow models.Workflow) (models.Workflow, er
 	return workflow, err
 }
 
-//Update adds a Workflow in the DB
+//Updates a Workflow in the DB
 func (r *PostgresRepository) Update(workflowNew models.Workflow) (models.Workflow, error) {
 
 	err := r.Db.Model(&workflowNew).Where("uuid = ?", workflowNew.UUID).Update("status", workflowNew.Status).Error
@@ -87,12 +89,12 @@ func (r PostgresRepository) ConsumeFromQueue() ([]models.Workflow, error) {
 		false,   // delete when unused
 		false,   // exclusive
 		false,   // no-wait
-		nil,     // arguments
+		nil,     // argumentsj
 	)
-	msgs, err := ch.Consume(
+	deliveries, err := ch.Consume(
 		q.Name,         // queue
 		"workflow-api", // consumer
-		false,          // auto-ack
+		true,           // auto-ack
 		false,          // exclusive
 		false,          // no-local
 		true,           // no-wait
@@ -100,21 +102,30 @@ func (r PostgresRepository) ConsumeFromQueue() ([]models.Workflow, error) {
 	)
 
 	workflowList := []models.Workflow{}
-	forever := make(chan bool)
-	go func(list *[]models.Workflow) {
-		for d := range msgs {
+	msgs := make(chan []byte)
+	done := make(chan error)
 
-			if err := json.Unmarshal(d.Body, &workflow); err != nil {
-				log.Println(err)
-			}
-			workflow.Status = models.Consumed
-			log.Println(workflow)
-			*list = append(*list, workflow)
-			r.Update(workflow)
-			d.Ack(false)
-			log.Println("Tamanho " + string(len(*list)))
+	go func(deliveries <-chan amqp.Delivery, done chan error, message chan []byte) {
+
+		log.Println("Start reading message")
+		for d := range deliveries {
+			message <- d.Body
+			log.Println("Message was read")
 		}
-	}(&workflowList)
-	<-forever
+		done <- nil
+	}(deliveries, done, msgs)
+	for {
+		if err := json.Unmarshal(<-msgs, &workflow); err != nil {
+			log.Println(err)
+		}
+		workflow.Status = models.Consumed
+		log.Println(workflow)
+		log.Printf("%s\n", <-msgs)
+		workflowList = append(workflowList, workflow)
+		if len(workflowList) > 10 {
+			break
+		}
+	}
+
 	return workflowList, err
 }
