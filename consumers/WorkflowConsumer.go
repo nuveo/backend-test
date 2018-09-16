@@ -69,7 +69,7 @@ func (wc *WorkflowConsumer) Run() error {
 			}
 
 			//Create a new UUID to a workflow item
-			workflow.UUID, _ = uuid.NewV4()
+			workflow.UUID = uuid.NewV4()
 			//Changes the workflow status to "Consumed"
 			workflow.Status = models.Consumed
 
