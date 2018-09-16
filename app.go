@@ -2,10 +2,13 @@ package main
 
 import (
 	"database/sql"
+	"encoding/csv"
 	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strconv"
 
 	"github.com/gorilla/mux"
@@ -24,6 +27,7 @@ func (a *App) initializeRoutes() {
 	a.Router.HandleFunc("/workflows", a.CreateWorkflow).Methods("POST")
 	a.Router.HandleFunc("/workflows/{id:[0-9]+}", a.Workflow).Methods("GET")
 	a.Router.HandleFunc("/workflows/{id:[0-9]+}", a.UpdateWorkflow).Methods("PATCH")
+	a.Router.HandleFunc("/workflows/consume", a.ConsumeWorkflow).Methods("GET")
 }
 
 // Database starts a connection with the database.
@@ -105,7 +109,6 @@ func (a *App) CreateWorkflow(w http.ResponseWriter, r *http.Request) {
 	log.Println("Creating new workflow")
 
 	type decoded struct {
-		UUID   int             `json:"uuid"`
 		Status string          `json:"status"`
 		Data   json.RawMessage `json:"data"`
 		Steps  string          `json:"steps"`
@@ -120,18 +123,17 @@ func (a *App) CreateWorkflow(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 
 	workflow := Workflow{
-		UUID:   d.UUID,
 		Status: d.Status,
 		Data:   string(d.Data),
 		Steps:  d.Steps,
 	}
 
-	queue.Enqueue(workflow)
-
 	if err := workflow.Insert(a.DB); err != nil {
 		errorReply(w, http.StatusInternalServerError, err.Error())
 		return
 	}
+
+	queue.Enqueue(workflow)
 
 	reply(w, http.StatusCreated, workflow.UUID)
 }
@@ -166,6 +168,43 @@ func (a *App) UpdateWorkflow(w http.ResponseWriter, r *http.Request) {
 	}
 
 	reply(w, http.StatusOK, workflow)
+}
+
+// ConsumeWorkflow consumes workflows from queue.
+func (a *App) ConsumeWorkflow(w http.ResponseWriter, r *http.Request) {
+	path, _ := filepath.Abs("./")
+
+	folder := filepath.Join(".", "data")
+	os.MkdirAll(folder, os.ModePerm)
+
+	if queue.IsEmpty() {
+		errorReply(w, http.StatusInternalServerError, "Empty queue")
+		return
+	}
+
+	item := queue.Dequeue()
+	id := item.UUID
+	fileName := fmt.Sprintf("%d", id) + "-workflow.csv"
+
+	file, err := os.Create(path + "/data/" + fileName)
+	if err != nil {
+		errorReply(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	defer file.Close()
+
+	writer := csv.NewWriter(file)
+	defer writer.Flush()
+
+	var data []string
+	data = append(data, item.Data)
+
+	if err := writer.Write(data); err != nil {
+		errorReply(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	reply(w, http.StatusOK, "CSV file "+fileName+" generated successfully")
 }
 
 // reply returns request with header.
