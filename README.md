@@ -22,7 +22,7 @@ Fork this project in a private project and create a branch. When you want to our
 |POST|/workflow|insert a workflow on database and on queue and respond request with the inserted workflow|
 |PATCH|/workflow/{UUID}|update status from specific workflow|
 |GET|/workflow|list all workflows|
-|GET|/workflow/consume|consume a workflow from queue and generete a CSV file with workflow.Data|
+|GET|/workflow/consume|consume a workflow from queue and generate a CSV file with workflow.Data|
 
 ## Technologies
 
