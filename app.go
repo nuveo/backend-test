@@ -129,7 +129,7 @@ func (a *App) CreateWorkflow(w http.ResponseWriter, r *http.Request) {
 
 	queue.Enqueue(workflow)
 
-	reply(w, http.StatusCreated, workflow.UUID)
+	reply(w, http.StatusCreated, workflow)
 }
 
 // UpdateWorkflow updates selected workflow with received ID.
