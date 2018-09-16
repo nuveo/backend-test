@@ -52,9 +52,12 @@ func (a *App) Connect(user, password, dbname string) error {
 	return nil
 }
 
-// Prepare installs missing table and/or extensions and prepares database.
-func (a *App) Prepare() error {
+// Database installs missing table and/or extensions and prepares database.
+func (a *App) Database() error {
 	if _, err := a.DB.Exec(createEnum); err != nil {
+		return err
+	}
+	if _, err := a.DB.Exec(createExtension); err != nil {
 		return err
 	}
 	if _, err := a.DB.Exec(createTable); err != nil {
@@ -173,18 +176,18 @@ func (a *App) UpdateWorkflow(w http.ResponseWriter, r *http.Request) {
 func (a *App) ConsumeWorkflow(w http.ResponseWriter, r *http.Request) {
 	log.Printf("Consuming workflow")
 
-	path, _ := filepath.Abs("./")
-
-	folder := filepath.Join(".", "data")
-	os.MkdirAll(folder, os.ModePerm)
-
 	if queue.IsEmpty() {
 		errorReply(w, http.StatusInternalServerError, errEmptyQueue)
 		return
 	}
 
+	path, _ := filepath.Abs("./")
+
+	folder := filepath.Join(".", "workflows")
+	os.MkdirAll(folder, os.ModePerm)
+
 	workflow := queue.Dequeue()
-	file, err := os.Create(fmt.Sprintf("%s/data/%s.csv", path, workflow.UUID))
+	file, err := os.Create(fmt.Sprintf("%s/workflows/%s.csv", path, workflow.UUID))
 	if err != nil {
 		errorReply(w, http.StatusInternalServerError, err.Error())
 		return
