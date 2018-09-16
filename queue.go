@@ -4,6 +4,10 @@ import (
 	"sync"
 )
 
+const (
+	errEmptyQueue = "Empty queue"
+)
+
 // ItemQueue is a queue of workflow Items.
 type ItemQueue struct {
 	items []Workflow

@@ -24,8 +24,8 @@ const createTable = `CREATE TABLE IF NOT EXISTS workflows (
 	PRIMARY KEY (uuid)
 );`
 
-// Credentials contains user credentials.
-type Credentials struct {
+// Credential contains user credentials.
+type Credential struct {
 	User     string
 	Password string
 	Database string
@@ -33,28 +33,23 @@ type Credentials struct {
 
 func main() {
 	if len(os.Args) <= 3 {
-		log.Fatalf("The system couldn't start application: arguments are missing")
+		log.Fatalf("Failed to start application: arguments are missing")
 	}
-	c := Credentials{User: os.Args[1], Password: os.Args[2], Database: os.Args[3]}
-	log.Println("Database credentials successfully received")
+	c := Credential{User: os.Args[1], Password: os.Args[2], Database: os.Args[3]}
 
 	var a App
 	if err := a.Connect(c.User, c.Password, c.Database); err != nil {
-		log.Fatalf("The system couldn't open a database connection: %v", err)
+		log.Fatalf("Failed to open a database connection: %v", err)
 	}
-	log.Println("Database successfully connected")
 
 	if err := a.Prepare(); err != nil {
-		log.Fatalf("The system couldn't prepare database: %v", err)
+		log.Fatalf("Failed to prepare database: %v", err)
 	}
-	log.Println("Database successfully prepared")
 
 	a.Routes()
-	log.Println("Routes successfully initiated")
 
 	queue.New()
-	log.Println("Queue successfully created")
 
-	log.Println("Application running on localhost" + port)
+	log.Printf("Application running on localhost%s", port)
 	a.Run(port)
 }

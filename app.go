@@ -14,6 +14,17 @@ import (
 	_ "github.com/lib/pq"
 )
 
+const (
+	consumedStatus      = "consumed"
+	errConsumedWorkflow = "Workflow already consumed"
+	errGetWorkflow      = "Failed to get workflow: "
+	errGetWorkflows     = "Failed to get workflows: "
+	errUpdateWorkflow   = "Failed to update workflow: "
+	errInsertWorkflow   = "Failed to insert workflow: "
+	errInvalidPayload   = "Invalid request payload: "
+	errWorkflowNotFound = "Workflow not found"
+)
+
 // App contains the application's connections and dependencies.
 type App struct {
 	Router *mux.Router
@@ -71,7 +82,7 @@ func (a *App) Workflows(w http.ResponseWriter, r *http.Request) {
 
 	workflows, err := Workflows(a.DB)
 	if err != nil {
-		errorReply(w, http.StatusInternalServerError, err.Error())
+		errorReply(w, http.StatusInternalServerError, errGetWorkflows+err.Error())
 		return
 	}
 
@@ -90,88 +101,90 @@ func (a *App) CreateWorkflow(w http.ResponseWriter, r *http.Request) {
 	var d decoded
 	decoder := json.NewDecoder(r.Body)
 	if err := decoder.Decode(&d); err != nil {
-		errorReply(w, http.StatusBadRequest, "Invalid request payload")
+		errorReply(w, http.StatusBadRequest, errInvalidPayload+err.Error())
 		return
 	}
 	defer r.Body.Close()
 
+	// to deal with jsonb type
 	workflow := Workflow{
 		Data:  string(d.Data),
 		Steps: d.Steps,
 	}
 
 	if err := workflow.Insert(a.DB); err != nil {
-		errorReply(w, http.StatusInternalServerError, err.Error())
+		errorReply(w, http.StatusInternalServerError, errInsertWorkflow+err.Error())
 		return
 	}
 
-	// verifies if workflow was successfully inserted in database
+	// to verify if workflow was successfully inserted in database
 	if err := workflow.Get(a.DB); err != nil {
 		switch err {
 		case sql.ErrNoRows:
-			errorReply(w, http.StatusNotFound, "Workflow not found")
+			errorReply(w, http.StatusNotFound, errWorkflowNotFound)
 		default:
-			errorReply(w, http.StatusInternalServerError, err.Error())
+			errorReply(w, http.StatusInternalServerError, errGetWorkflow+err.Error())
 		}
 		return
 	}
 
 	queue.Enqueue(workflow)
 
+	log.Printf("Workflow %s created and enqueued\n", workflow.UUID)
 	reply(w, http.StatusCreated, workflow)
 }
 
 // UpdateWorkflow updates selected workflow with received ID.
 func (a *App) UpdateWorkflow(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	log.Println("Updating workflow " + vars["UUID"])
+	log.Printf("Updating workflow %s", vars["UUID"])
 
 	var workflow Workflow
 	workflow.UUID = vars["UUID"]
 	if err := workflow.Get(a.DB); err != nil {
 		switch err {
 		case sql.ErrNoRows:
-			errorReply(w, http.StatusNotFound, "Workflow not found")
+			errorReply(w, http.StatusNotFound, errWorkflowNotFound)
 		default:
-			errorReply(w, http.StatusInternalServerError, err.Error())
+			errorReply(w, http.StatusInternalServerError, errGetWorkflow+err.Error())
 		}
 		return
 	}
 
 	queue.Remove(workflow.UUID)
 
-	if workflow.Status == "consumed" {
-		errorReply(w, http.StatusInternalServerError, "Workflow lala was already consumed")
+	if workflow.Status == consumedStatus {
+		errorReply(w, http.StatusInternalServerError, errConsumedWorkflow)
 		return
 	}
 
-	workflow.Status = "consumed"
+	workflow.Status = consumedStatus
 
 	if err := workflow.Update(a.DB); err != nil {
-		errorReply(w, http.StatusInternalServerError, err.Error())
+		errorReply(w, http.StatusInternalServerError, errUpdateWorkflow+err.Error())
 		return
 	}
 
+	log.Printf("Workflow %s updated\n", workflow.UUID)
 	reply(w, http.StatusOK, workflow)
 }
 
 // ConsumeWorkflow consumes workflows from queue.
 func (a *App) ConsumeWorkflow(w http.ResponseWriter, r *http.Request) {
+	log.Printf("Consuming workflow")
+
 	path, _ := filepath.Abs("./")
 
 	folder := filepath.Join(".", "data")
 	os.MkdirAll(folder, os.ModePerm)
 
 	if queue.IsEmpty() {
-		errorReply(w, http.StatusInternalServerError, "Empty queue")
+		errorReply(w, http.StatusInternalServerError, errEmptyQueue)
 		return
 	}
 
 	workflow := queue.Dequeue()
-	uuid := workflow.UUID
-	fileName := uuid + ".csv"
-
-	file, err := os.Create(path + "/data/" + fileName)
+	file, err := os.Create(fmt.Sprintf("%s/data/%s.csv", path, workflow.UUID))
 	if err != nil {
 		errorReply(w, http.StatusInternalServerError, err.Error())
 		return
@@ -189,13 +202,14 @@ func (a *App) ConsumeWorkflow(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	workflow.Status = "consumed"
+	workflow.Status = consumedStatus
 	if err := workflow.Update(a.DB); err != nil {
 		errorReply(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
-	reply(w, http.StatusOK, "CSV file "+fileName+" generated successfully")
+	log.Printf("Workflow %s consumed and CSV file generated successfully", workflow.UUID)
+	reply(w, http.StatusOK, "Workflow "+workflow.UUID+" consumed and CSV file generated successfully")
 }
 
 // reply returns request with header.
