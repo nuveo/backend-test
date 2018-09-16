@@ -25,7 +25,7 @@ type App struct {
 func (a *App) initializeRoutes() {
 	a.Router.HandleFunc("/workflows", a.Workflows).Methods("GET")
 	a.Router.HandleFunc("/workflows", a.CreateWorkflow).Methods("POST")
-	a.Router.HandleFunc("/workflows/{id:[0-9]+}", a.Workflow).Methods("GET")
+	a.Router.HandleFunc("/workflows/{id:[0-9]+}", a.Workflow).Methods("GET") // extra endpoint for testing purposes
 	a.Router.HandleFunc("/workflows/{id:[0-9]+}", a.UpdateWorkflow).Methods("PATCH")
 	a.Router.HandleFunc("/workflows/consume", a.ConsumeWorkflow).Methods("GET")
 }
@@ -51,7 +51,7 @@ func (a *App) Routes() {
 	a.initializeRoutes()
 }
 
-// Run runs the application in the address 'addr'.
+// Run runs the application in addr.
 func (a *App) Run(addr string) {
 	log.Fatal(http.ListenAndServe(addr, a.Router))
 }
@@ -182,8 +182,8 @@ func (a *App) ConsumeWorkflow(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	item := queue.Dequeue()
-	id := item.UUID
+	workflow := queue.Dequeue()
+	id := workflow.UUID
 	fileName := fmt.Sprintf("%d", id) + "-workflow.csv"
 
 	file, err := os.Create(path + "/data/" + fileName)
@@ -197,9 +197,15 @@ func (a *App) ConsumeWorkflow(w http.ResponseWriter, r *http.Request) {
 	defer writer.Flush()
 
 	var data []string
-	data = append(data, item.Data)
+	data = append(data, workflow.Data)
 
 	if err := writer.Write(data); err != nil {
+		errorReply(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	workflow.Status = "consumed"
+	if err := workflow.Update(a.DB); err != nil {
 		errorReply(w, http.StatusInternalServerError, err.Error())
 		return
 	}
