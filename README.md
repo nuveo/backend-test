@@ -56,8 +56,7 @@ utilize o cliente de banco de dados de sua preferência ou acesse o `PGAdim4`
 através da URL [http://localhost](http://localhost) com o *login*
 `admin@nuveo.ai` e *senha* `nuveo`
 
-```
-sql
+```sql
 CREATE USER nuveo WITH
 	LOGIN
 	NOSUPERUSER
@@ -79,8 +78,7 @@ Com o bando de dados criado, ainda com o superusuário *postgres* conecte ao
 banco de dado nuveo e crie o esquema *nuveo* e habilite a extensão `uuid-ossp`
 que permite a criação de atributos do tipo UUID.
 
-```
-sql
+```sql
 CREATE SCHEMA nuveo
     AUTHORIZATION nuveo;
 
@@ -90,9 +88,7 @@ CREATE EXTENSION
 
 Nesse momento, já é possível conectar ao banco de dados com o usuário *nuveo* e
 criar a tabela de mesmo nome.
-
-```
-sql
+```sql
 create table nuveo.workflow(workflow_id serial not null,
                             uuid uuid not null,
                             status smallint not null,
