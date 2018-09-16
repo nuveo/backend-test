@@ -6,6 +6,20 @@ import (
 	"github.com/lib/pq"
 )
 
+const createEnum = `DO $$ BEGIN
+CREATE TYPE status_t AS ENUM ('inserted', 'consumed');
+EXCEPTION
+WHEN duplicate_object THEN null;
+END $$;`
+const createExtension = `CREATE EXTENSION IF NOT EXISTS "uuid-ossp";`
+const createTable = `CREATE TABLE IF NOT EXISTS workflows (
+	uuid UUID DEFAULT uuid_generate_v4(),
+	status status_t DEFAULT 'inserted' NOT NULL,
+	data JSONB NOT NULL,
+	steps text[] NOT NULL,
+	PRIMARY KEY (uuid)
+);`
+
 // Workflow reflects the attributes from Workflow's table.
 type Workflow struct {
 	UUID   string
@@ -16,7 +30,8 @@ type Workflow struct {
 
 // Get selects workflow from database by ID.
 func (w *Workflow) Get(db *sql.DB) error {
-	return db.QueryRow("SELECT status, data, steps FROM workflows WHERE uuid=$1",
+	return db.QueryRow(
+		"SELECT status, data, steps FROM workflows WHERE uuid=$1",
 		w.UUID).Scan(&w.Status, &w.Data, pq.Array(&w.Steps))
 }
 
@@ -34,22 +49,22 @@ func (w *Workflow) Insert(db *sql.DB) error {
 
 // Update changes workflow status.
 func (w *Workflow) Update(db *sql.DB) error {
-	_, err :=
-		db.Exec("UPDATE workflows SET status=$1 WHERE uuid=$2",
-			w.Status, w.UUID)
+	_, err := db.Exec(
+		"UPDATE workflows SET status=$1 WHERE uuid=$2",
+		w.Status, w.UUID)
 	return err
 }
 
 // Workflows returns all workflows from database.
 func Workflows(db *sql.DB) ([]Workflow, error) {
-	rows, err := db.Query("SELECT uuid, status, data, steps FROM workflows")
+	rows, err := db.Query(
+		"SELECT uuid, status, data, steps FROM workflows")
 	if err != nil {
 		return nil, err
 	}
-
 	defer rows.Close()
 
-	workflows := []Workflow{}
+	var workflows []Workflow
 
 	for rows.Next() {
 		var w Workflow
