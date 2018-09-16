@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"strconv"
 
 	"github.com/gorilla/mux"
 	_ "github.com/lib/pq"
@@ -25,7 +24,6 @@ type App struct {
 func (a *App) initializeRoutes() {
 	a.Router.HandleFunc("/workflows", a.Workflows).Methods("GET")
 	a.Router.HandleFunc("/workflows", a.CreateWorkflow).Methods("POST")
-	a.Router.HandleFunc("/workflows/{UUID}", a.Workflow).Methods("GET") // extra endpoint for testing purposes
 	a.Router.HandleFunc("/workflows/{UUID}", a.UpdateWorkflow).Methods("PATCH")
 	a.Router.HandleFunc("/workflows/consume", a.ConsumeWorkflow).Methods("GET")
 }
@@ -56,40 +54,11 @@ func (a *App) Run(addr string) {
 	log.Fatal(http.ListenAndServe(addr, a.Router))
 }
 
-// Workflow returns the selected ID.
-func (a *App) Workflow(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	log.Println("Returning workflow " + vars["UUID"])
-
-	workflow := Workflow{UUID: vars["UUID"]}
-	if err := workflow.Get(a.DB); err != nil {
-		switch err {
-		case sql.ErrNoRows:
-			errorReply(w, http.StatusNotFound, "Workflow not found")
-		default:
-			errorReply(w, http.StatusInternalServerError, err.Error())
-		}
-		return
-	}
-
-	reply(w, http.StatusOK, workflow)
-}
-
 // Workflows returns all workflows from database.
 func (a *App) Workflows(w http.ResponseWriter, r *http.Request) {
 	log.Println("Returning all workflows")
 
-	count, _ := strconv.Atoi(r.FormValue("count"))
-	if count > 10 || count < 1 {
-		count = 10
-	}
-
-	start, _ := strconv.Atoi(r.FormValue("start"))
-	if start < 0 {
-		start = 0
-	}
-
-	workflows, err := Workflows(a.DB, start, count)
+	workflows, err := Workflows(a.DB)
 	if err != nil {
 		errorReply(w, http.StatusInternalServerError, err.Error())
 		return

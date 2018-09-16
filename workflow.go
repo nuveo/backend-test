@@ -39,11 +39,8 @@ func (w *Workflow) Update(db *sql.DB) error {
 }
 
 // Workflows returns all workflows from database.
-func Workflows(db *sql.DB, start, count int) ([]Workflow, error) {
-	rows, err := db.Query(
-		"SELECT uuid, status, data, steps FROM workflows LIMIT $1 OFFSET $2",
-		count, start)
-
+func Workflows(db *sql.DB) ([]Workflow, error) {
+	rows, err := db.Query("SELECT uuid, status, data, steps FROM workflows")
 	if err != nil {
 		return nil, err
 	}
