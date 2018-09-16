@@ -25,13 +25,26 @@ func (w *ItemQueue) Enqueue(i Workflow) {
 }
 
 // Dequeue removes a workflow Item from the first position of the queue.
-func (w *ItemQueue) Dequeue() *Workflow {
+func (w *ItemQueue) Dequeue() Workflow {
 	w.lock.Lock()
 	workflow := w.items[0]
 	w.items = w.items[1:len(w.items)]
 	w.lock.Unlock()
 
-	return &workflow
+	return workflow
+}
+
+// Remove removes the selected workflow Item from the the queue.
+func (w *ItemQueue) Remove(id int) {
+	w.lock.Lock()
+	for i, v := range w.items {
+		if v.UUID == id {
+			w.items = append(w.items[:i], w.items[i+1:]...)
+		}
+	}
+	w.lock.Unlock()
+
+	return
 }
 
 // Front returns the first Item in the queue without removing it.

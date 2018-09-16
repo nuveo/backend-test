@@ -160,6 +160,8 @@ func (a *App) UpdateWorkflow(w http.ResponseWriter, r *http.Request) {
 		errorReply(w, http.StatusInternalServerError, "Workflow not found")
 		return
 	}
+
+	queue.Remove(workflow.UUID)
 	workflow.Status = "consumed"
 
 	if err := workflow.Update(a.DB); err != nil {
