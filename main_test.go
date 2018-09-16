@@ -20,7 +20,7 @@ var (
 )
 
 const createTable = `CREATE TABLE IF NOT EXISTS workflows (
-	uuid SERIAL,
+	uuid UUID,
 	status status_t DEFAULT 'inserted',
 	data JSONB NOT NULL,
 	steps text[],
@@ -63,7 +63,8 @@ func TestEmptyTable(t *testing.T) {
 func TestGetNonExistentWorkflow(t *testing.T) {
 	clearDatabase()
 
-	req, err := http.NewRequest("GET", "/workflows/11", nil)
+	uuid := "a6406644-414b-4e11-bdf5-c1438928dc14"
+	req, err := http.NewRequest("GET", "/workflows/"+uuid, nil)
 	if err != nil {
 		t.Errorf("Failed on creating a new GET request: %v", err)
 	}
@@ -118,6 +119,7 @@ func TestGetProduct(t *testing.T) {
 	checkResponseCode(t, http.StatusOK, response.Code)
 }
 
+// LAUREN corrigir recebendo UUID
 func TestUpdateProduct(t *testing.T) {
 	clearDatabase()
 
