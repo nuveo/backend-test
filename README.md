@@ -116,8 +116,13 @@ O sistema de mensageria *Rabbitqm* receberá requisições em sua porta padrão
 endereço [http://localhost:15672](http://localhost:15672).
 
 
-Com a infraestrutura criada podemos iniciar a API com o comando: `go run
-main.go`. Se nenhum problema for identificado, a seguinte mensagem será exibida
+Com a infraestrutura criada podemos iniciar a API com o comando:
+
+```console
+go run main.go
+```
+
+Se nenhum problema for identificado, a seguinte mensagem será exibida
 no terminal.
 
 ![Workflow API](./img/workflow-api.png)
