@@ -25,8 +25,8 @@ type App struct {
 func (a *App) initializeRoutes() {
 	a.Router.HandleFunc("/workflows", a.Workflows).Methods("GET")
 	a.Router.HandleFunc("/workflows", a.CreateWorkflow).Methods("POST")
-	a.Router.HandleFunc("/workflows/{id}", a.Workflow).Methods("GET") // extra endpoint for testing purposes
-	a.Router.HandleFunc("/workflows/{id}", a.UpdateWorkflow).Methods("PATCH")
+	a.Router.HandleFunc("/workflows/{UUID}", a.Workflow).Methods("GET") // extra endpoint for testing purposes
+	a.Router.HandleFunc("/workflows/{UUID}", a.UpdateWorkflow).Methods("PATCH")
 	a.Router.HandleFunc("/workflows/consume", a.ConsumeWorkflow).Methods("GET")
 }
 
@@ -59,9 +59,9 @@ func (a *App) Run(addr string) {
 // Workflow returns the selected ID.
 func (a *App) Workflow(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	log.Println("Returning workflow " + vars["id"])
+	log.Println("Returning workflow " + vars["UUID"])
 
-	workflow := Workflow{UUID: vars["id"]}
+	workflow := Workflow{UUID: vars["UUID"]}
 	if err := workflow.Get(a.DB); err != nil {
 		switch err {
 		case sql.ErrNoRows:
@@ -135,10 +135,10 @@ func (a *App) CreateWorkflow(w http.ResponseWriter, r *http.Request) {
 // UpdateWorkflow updates selected workflow with received ID.
 func (a *App) UpdateWorkflow(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	log.Println("Updating workflow " + vars["id"])
+	log.Println("Updating workflow " + vars["UUID"])
 
 	var workflow Workflow
-	workflow.UUID = vars["id"]
+	workflow.UUID = vars["UUID"]
 	if err := workflow.Get(a.DB); err != nil {
 		switch err {
 		case sql.ErrNoRows:
@@ -179,8 +179,8 @@ func (a *App) ConsumeWorkflow(w http.ResponseWriter, r *http.Request) {
 	}
 
 	workflow := queue.Dequeue()
-	id := workflow.UUID
-	fileName := id + ".csv"
+	uuid := workflow.UUID
+	fileName := uuid + ".csv"
 
 	file, err := os.Create(path + "/data/" + fileName)
 	if err != nil {
