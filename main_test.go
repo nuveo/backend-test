@@ -13,10 +13,10 @@ import (
 )
 
 var (
-	a         main.App
-	luser     = "postgres"
-	lpassword = "1234"
-	ldbname   = "nuveo"
+	a        main.App
+	user     = "postgres"
+	password = "1234"
+	dbname   = "nuveo"
 )
 
 const createTable = `CREATE TABLE IF NOT EXISTS workflows (
@@ -29,7 +29,7 @@ const createTable = `CREATE TABLE IF NOT EXISTS workflows (
 
 func TestMain(m *testing.M) {
 	a = main.App{}
-	a.Database(luser, lpassword, ldbname)
+	a.Connect(user, password, dbname)
 	a.Routes()
 
 	if _, err := a.DB.Exec(createTable); err != nil {
@@ -83,7 +83,7 @@ func TestGetNonExistentWorkflow(t *testing.T) {
 func TestCreateProduct(t *testing.T) {
 	clearDatabase()
 
-	payload := []byte(`{"status": "inserted","data":"{'teste': 'Teste'}", "steps":"{'ola'}"}`)
+	payload := []byte(`{"status": "inserted","data":"{'teste': 'Teste'}", "steps":"["go", "eh","vida"]"}`)
 
 	req, err := http.NewRequest("POST", "/workflows", bytes.NewBuffer(payload))
 	if err != nil {
@@ -111,7 +111,7 @@ func TestUpdateProduct(t *testing.T) {
 	}
 
 	for i := 0; i < count; i++ {
-		a.DB.Exec("INSERT INTO workflows(status, data, steps) VALUES($1, $2, $3)", "inserted", "{\"teste1\": \"teste1\"}", "{\"hello\"}")
+		a.DB.Exec("INSERT INTO workflows(status, data, steps) VALUES($1, $2, $3)", "inserted", "{\"teste1\": \"teste1\"}", "['go', 'eh','vida']")
 	}
 
 	req, err := http.NewRequest("GET", "/workflow/1", nil)

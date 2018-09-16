@@ -2,6 +2,8 @@ package main
 
 import (
 	"database/sql"
+
+	"github.com/lib/pq"
 )
 
 // Workflow reflects the attributes from Workflow's table.
@@ -9,20 +11,20 @@ type Workflow struct {
 	UUID   string
 	Status string
 	Data   string
-	Steps  string
+	Steps  []string
 }
 
 // Get selects workflow from database by ID.
 func (w *Workflow) Get(db *sql.DB) error {
 	return db.QueryRow("SELECT status, data, steps FROM workflows WHERE uuid=$1",
-		w.UUID).Scan(&w.Status, &w.Data, &w.Steps)
+		w.UUID).Scan(&w.Status, &w.Data, pq.Array(&w.Steps))
 }
 
 // Insert creates a new workflow in the database.
 func (w *Workflow) Insert(db *sql.DB) error {
 	err := db.QueryRow(
 		"INSERT INTO workflows(status, data, steps) VALUES($1, $2, $3) RETURNING uuid",
-		w.Status, w.Data, w.Steps).Scan(&w.UUID)
+		w.Status, w.Data, pq.Array(&w.Steps)).Scan(&w.UUID)
 	if err != nil {
 		return err
 	}
@@ -51,7 +53,7 @@ func Workflows(db *sql.DB) ([]Workflow, error) {
 
 	for rows.Next() {
 		var w Workflow
-		if err := rows.Scan(&w.UUID, &w.Status, &w.Data, &w.Steps); err != nil {
+		if err := rows.Scan(&w.UUID, &w.Status, &w.Data, pq.Array(&w.Steps)); err != nil {
 			return nil, err
 		}
 		workflows = append(workflows, w)

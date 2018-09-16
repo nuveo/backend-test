@@ -85,7 +85,7 @@ func (a *App) CreateWorkflow(w http.ResponseWriter, r *http.Request) {
 	type decoded struct {
 		Status string          `json:"status"`
 		Data   json.RawMessage `json:"data"`
-		Steps  string          `json:"steps"`
+		Steps  []string        `json:"steps"`
 	}
 
 	var d decoded
