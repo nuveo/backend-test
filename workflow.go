@@ -14,7 +14,7 @@ type workflow struct {
 }
 
 func (w *workflow) getWorkflow(db *sql.DB) error {
-	return db.QueryRow("SELECT status, data, steps FROM products WHERE uuid=$1",
+	return db.QueryRow("SELECT status, data, steps FROM workflows WHERE uuid=$1",
 		w.UUID).Scan(&w.Status, &w.Data, &w.Steps)
 }
 
