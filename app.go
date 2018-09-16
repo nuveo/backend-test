@@ -21,9 +21,9 @@ type App struct {
 // initializeRoutes provides the application's endpoints and handles requests.
 func (a *App) initializeRoutes() {
 	a.Router.HandleFunc("/workflows", a.Workflows).Methods("GET")
-	a.Router.HandleFunc("/workflows", a.createWorkflow).Methods("POST")
+	a.Router.HandleFunc("/workflows", a.CreateWorkflow).Methods("POST")
 	a.Router.HandleFunc("/workflows/{id:[0-9]+}", a.Workflow).Methods("GET")
-	a.Router.HandleFunc("/workflows/{id:[0-9]+}", a.updateWorkflow).Methods("PATCH")
+	a.Router.HandleFunc("/workflows/{id:[0-9]+}", a.UpdateWorkflow).Methods("PATCH")
 }
 
 // Database starts a connection with the database.
@@ -100,8 +100,8 @@ func (a *App) Workflows(w http.ResponseWriter, r *http.Request) {
 	reply(w, http.StatusOK, workflows)
 }
 
-// createWorkflow creates a new workflow received from payload data.
-func (a *App) createWorkflow(w http.ResponseWriter, r *http.Request) {
+// CreateWorkflow creates a new workflow received from payload data.
+func (a *App) CreateWorkflow(w http.ResponseWriter, r *http.Request) {
 	log.Println("Creating new workflow")
 
 	type decoded struct {
@@ -136,8 +136,8 @@ func (a *App) createWorkflow(w http.ResponseWriter, r *http.Request) {
 	reply(w, http.StatusCreated, workflow.UUID)
 }
 
-// updateWorkflow updates selected workflow with received ID.
-func (a *App) updateWorkflow(w http.ResponseWriter, r *http.Request) {
+// UpdateWorkflow updates selected workflow with received ID.
+func (a *App) UpdateWorkflow(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	log.Println("Updating workflow " + vars["id"])
 
