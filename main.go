@@ -10,6 +10,7 @@ var (
 	ldbname   = "nuveo"
 	port      = ":8889"
 	db        = "postgres"
+	queue     ItemQueue
 )
 
 const createTable = `CREATE TABLE IF NOT EXISTS workflows (
@@ -21,7 +22,7 @@ const createTable = `CREATE TABLE IF NOT EXISTS workflows (
 );`
 
 func main() {
-	// Receber flags com dados - TODO
+	// Receber flags com dados
 	log.Println("Database credentials succesfully received")
 
 	var a App
@@ -37,6 +38,9 @@ func main() {
 
 	a.Routes()
 	log.Println("Routes succesfully initiated")
+
+	queue.New()
+	log.Println("Queue succesfully created")
 
 	log.Println("Application running at port " + port)
 	a.Run(port)
