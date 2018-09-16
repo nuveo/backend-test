@@ -244,7 +244,7 @@ Workflow UUID: string [required]
 ## Feedback
 It was a fun test to work for in the past few days. I've learned a lot about PostgreSQL, testing and many other things while developing it.
 
-My main goal was to keep this project as simple as possible, including its code, its file structure, its architecture and its depencencies. I've only used two dependencies: Gorilla Mux, to deal with handler APIs and routes, and the PostgreSQL driver inside Go.
+My main goal was to keep this project as simple as possible, respecting my current knowledge and experience, including its code, its file structure, its architecture and its depencencies. I've only used two dependencies: Gorilla Mux, to deal with handler APIs and routes, and the PostgreSQL driver inside Go.
 
 To keep things simple, I decided not to use a complex message queue service and I've only used a queue data structure.
 
