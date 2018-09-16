@@ -132,7 +132,7 @@ func (a *App) createWorkflow(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	reply(w, http.StatusCreated, wf)
+	reply(w, http.StatusCreated, wf.UUID)
 }
 
 // updateWorkflow updates selected workflow with received ID.
