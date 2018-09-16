@@ -152,16 +152,22 @@ func (a *App) UpdateWorkflow(w http.ResponseWriter, r *http.Request) {
 	var workflow Workflow
 	workflow.UUID = id
 	if err := workflow.Get(a.DB); err != nil {
-		errorReply(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-
-	if workflow.Data == "" {
-		errorReply(w, http.StatusInternalServerError, "Workflow not found")
+		switch err {
+		case sql.ErrNoRows:
+			errorReply(w, http.StatusNotFound, "Workflow not found")
+		default:
+			errorReply(w, http.StatusInternalServerError, err.Error())
+		}
 		return
 	}
 
 	queue.Remove(workflow.UUID)
+
+	if workflow.Status == "consumed" {
+		errorReply(w, http.StatusInternalServerError, "Workflow lala was already consumed")
+		return
+	}
+
 	workflow.Status = "consumed"
 
 	if err := workflow.Update(a.DB); err != nil {
