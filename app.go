@@ -26,8 +26,8 @@ func (a *App) initializeRoutes() {
 	a.Router.HandleFunc("/workflows/{id:[0-9]+}", a.updateWorkflow).Methods("PATCH")
 }
 
-// workflowRequest reflects the attributes from workflow's table.
-type workflowRequest struct {
+// WorkflowRequest reflects the attributes from workflow's table.
+type WorkflowRequest struct {
 	UUID   int             `json:"uuid"`
 	Status string          `json:"status"`
 	Data   json.RawMessage `json:"data"`
@@ -71,7 +71,7 @@ func (a *App) Workflow(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	wf := workflow{UUID: id}
+	wf := Workflow{UUID: id}
 	if err := wf.getWorkflow(a.DB); err != nil {
 		switch err {
 		case sql.ErrNoRows:
@@ -112,7 +112,7 @@ func (a *App) Workflows(w http.ResponseWriter, r *http.Request) {
 func (a *App) createWorkflow(w http.ResponseWriter, r *http.Request) {
 	log.Println("Creating new workflow")
 
-	var wfr workflowRequest
+	var wfr WorkflowRequest
 	decoder := json.NewDecoder(r.Body)
 	if err := decoder.Decode(&wfr); err != nil {
 		errorReply(w, http.StatusBadRequest, "Invalid request payload")
@@ -120,12 +120,14 @@ func (a *App) createWorkflow(w http.ResponseWriter, r *http.Request) {
 	}
 	defer r.Body.Close()
 
-	wf := workflow{
+	wf := Workflow{
 		UUID:   wfr.UUID,
 		Status: wfr.Status,
 		Data:   string(wfr.Data),
 		Steps:  wfr.Steps,
 	}
+
+	queue.Enqueue(wf)
 
 	if err := wf.insertWorkflow(a.DB); err != nil {
 		errorReply(w, http.StatusInternalServerError, err.Error())
@@ -146,7 +148,7 @@ func (a *App) updateWorkflow(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var wf workflow
+	var wf Workflow
 	wf.UUID = id
 	if err := wf.getWorkflow(a.DB); err != nil {
 		errorReply(w, http.StatusInternalServerError, err.Error())
