@@ -18,38 +18,48 @@ type App struct {
 	DB     *sql.DB
 }
 
+// initializeRoutes provides the application's endpoints and handles requests.
 func (a *App) initializeRoutes() {
-	a.Router.HandleFunc("/workflows", a.getWorkflows).Methods("GET")
-	a.Router.HandleFunc("/workflow", a.createWorkflow).Methods("POST")
-	a.Router.HandleFunc("/workflow/{id:[0-9]+}", a.getWorkflow).Methods("GET")
-	a.Router.HandleFunc("/workflow/{id:[0-9]+}", a.updateWorkflow).Methods("PATCH")
+	a.Router.HandleFunc("/workflows", a.Workflows).Methods("GET")
+	a.Router.HandleFunc("/workflows", a.createWorkflow).Methods("POST")
+	a.Router.HandleFunc("/workflows/{id:[0-9]+}", a.Workflow).Methods("GET")
+	a.Router.HandleFunc("/workflows/{id:[0-9]+}", a.updateWorkflow).Methods("PATCH")
 }
 
-// InitDatabase starts a connection with the 'dbname' database.
-func (a *App) InitDatabase(user, password, dbname string) {
-	connectionString :=
-		fmt.Sprintf("user=%s password=%s dbname=%s", user, password, dbname)
+// Database starts a connection with the database.
+func (a *App) Database(user, password, dbname string) error {
+	credential := fmt.Sprintf("user=%s password=%s dbname=%s", user, password, dbname)
 
 	var err error
-	a.DB, err = sql.Open("postgres", connectionString)
+	a.DB, err = sql.Open(db, credential)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
+	return nil
+}
+
+// Routes starts a new router and its endpoints.
+func (a *App) Routes() {
+
 	a.Router = mux.NewRouter()
+
 	a.initializeRoutes()
 }
 
 // Run runs the application in the address 'addr'.
 func (a *App) Run(addr string) {
-	log.Fatal(http.ListenAndServe(":8000", a.Router))
+	log.Fatal(http.ListenAndServe(addr, a.Router))
 }
 
-func (a *App) getWorkflow(w http.ResponseWriter, r *http.Request) {
+// Workflow returns the selected ID.
+func (a *App) Workflow(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	id, err := strconv.Atoi(vars["uuid"])
+	log.Println("Returning workflow " + vars["id"])
+
+	id, err := strconv.Atoi(vars["id"])
 	if err != nil {
-		respondWithError(w, http.StatusBadRequest, "Invalid workflow ID")
+		errorReply(w, http.StatusBadRequest, "Invalid workflow ID")
 		return
 	}
 
@@ -57,21 +67,89 @@ func (a *App) getWorkflow(w http.ResponseWriter, r *http.Request) {
 	if err := wf.getWorkflow(a.DB); err != nil {
 		switch err {
 		case sql.ErrNoRows:
-			respondWithError(w, http.StatusNotFound, "Workflow not found")
+			errorReply(w, http.StatusNotFound, "Workflow not found")
 		default:
-			respondWithError(w, http.StatusInternalServerError, err.Error())
+			errorReply(w, http.StatusInternalServerError, err.Error())
 		}
 		return
 	}
 
-	respondWithJSON(w, http.StatusOK, wf)
+	reply(w, http.StatusOK, wf)
 }
 
-func respondWithError(w http.ResponseWriter, code int, message string) {
-	respondWithJSON(w, code, map[string]string{"error": message})
+// Workflows returns all workflows from database.
+func (a *App) Workflows(w http.ResponseWriter, r *http.Request) {
+	log.Println("Returning all workflows")
+
+	count, _ := strconv.Atoi(r.FormValue("count"))
+	if count > 10 || count < 1 {
+		count = 10
+	}
+
+	start, _ := strconv.Atoi(r.FormValue("start"))
+	if start < 0 {
+		start = 0
+	}
+
+	workflows, err := getWorkflows(a.DB, start, count)
+	if err != nil {
+		errorReply(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	reply(w, http.StatusOK, workflows)
 }
 
-func respondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
+// createWorkflow creates a new workflow received from payload data.
+func (a *App) createWorkflow(w http.ResponseWriter, r *http.Request) {
+	log.Println("Creating new workflow")
+	var wf workflow
+	decoder := json.NewDecoder(r.Body)
+	if err := decoder.Decode(&wf); err != nil {
+		errorReply(w, http.StatusBadRequest, "Invalid request payload")
+		return
+	}
+	defer r.Body.Close()
+
+	if err := wf.insertWorkflow(a.DB); err != nil {
+		errorReply(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	reply(w, http.StatusCreated, wf)
+}
+
+// updateWorkflow updates selected workflow with received ID.
+func (a *App) updateWorkflow(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	log.Println("Updating workflow " + vars["id"])
+
+	id, err := strconv.Atoi(vars["id"])
+	if err != nil {
+		errorReply(w, http.StatusBadRequest, "Invalid workflow UUID")
+		return
+	}
+
+	var wf workflow
+	decoder := json.NewDecoder(r.Body)
+	if err := decoder.Decode(&wf); err != nil {
+		errorReply(w, http.StatusBadRequest, "Invalid resquest payload")
+		return
+	}
+	defer r.Body.Close()
+
+	wf.UUID = id
+
+	if err := wf.updateWorkflow(a.DB); err != nil {
+		errorReply(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	reply(w, http.StatusOK, wf)
+}
+
+// reply returns request.
+func reply(w http.ResponseWriter, code int, payload interface{}) {
 	response, _ := json.Marshal(payload)
 
 	w.Header().Set("Content-Type", "application/json")
@@ -79,64 +157,7 @@ func respondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
 	w.Write(response)
 }
 
-func (a *App) getWorkflows(w http.ResponseWriter, r *http.Request) {
-	count, _ := strconv.Atoi(r.FormValue("count"))
-	start, _ := strconv.Atoi(r.FormValue("start"))
-
-	if count > 10 || count < 1 {
-		count = 10
-	}
-	if start < 0 {
-		start = 0
-	}
-
-	workflows, err := getWorkflows(a.DB, start, count)
-	if err != nil {
-		respondWithError(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-
-	respondWithJSON(w, http.StatusOK, workflows)
-}
-
-func (a *App) createWorkflow(w http.ResponseWriter, r *http.Request) {
-	var wf workflow
-	decoder := json.NewDecoder(r.Body)
-	if err := decoder.Decode(&wf); err != nil {
-		respondWithError(w, http.StatusBadRequest, "Invalid request payload")
-		return
-	}
-	defer r.Body.Close()
-
-	if err := wf.insertWorkflow(a.DB); err != nil {
-		respondWithError(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-
-	respondWithJSON(w, http.StatusCreated, wf)
-}
-
-func (a *App) updateWorkflow(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	id, err := strconv.Atoi(vars["id"])
-	if err != nil {
-		respondWithError(w, http.StatusBadRequest, "Invalid workflow UUID")
-		return
-	}
-
-	var wf workflow
-	decoder := json.NewDecoder(r.Body)
-	if err := decoder.Decode(&wf); err != nil {
-		respondWithError(w, http.StatusBadRequest, "Invalid resquest payload")
-		return
-	}
-	defer r.Body.Close()
-	wf.UUID = id
-
-	if err := wf.updateWorkflow(a.DB); err != nil {
-		respondWithError(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-
-	respondWithJSON(w, http.StatusOK, wf)
+// errorReply returns request with an error message.
+func errorReply(w http.ResponseWriter, code int, message string) {
+	reply(w, code, map[string]string{"error": message})
 }
