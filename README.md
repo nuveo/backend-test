@@ -45,7 +45,10 @@ detalhes de como instalar o docker clique
 [aqui](https://docs.docker.com/install/).
 
 Primeiro vamos fazer o dowload das imagens e instanciá-las:
-`docker-compose -f stack/nuveo-stack.yml up -d`
+
+```console
+docker-compose -f stack/nuveo-stack.yml up -d
+```
 
 Caso não ocorra problemas, a seguinete mensagem será exibida no terminal:
 
@@ -118,3 +121,22 @@ main.go`. Se nenhum problema for identificado, a seguinte mensagem será exibida
 no terminal.
 
 ![Workflow API](./img/workflow-api.png)
+
+## Inserir dados no Banco de Dados
+
+Para inserir dados de testes no banco de dados criamos um script em Python.
+Os dados podem ser inseridos através do comando:
+
+```console
+python dummy_data.py
+```
+
+## Produzir mensagens para a fila
+
+Para inserir mensagens na fila do sistema de mensageria *Rabbitqm* execute o
+`producer.go` disponível na pasta `qm`
+
+```console
+cd qm\
+go run producer.go
+```
