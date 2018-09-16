@@ -79,11 +79,10 @@ func TestGetNonExistentWorkflow(t *testing.T) {
 	}
 }
 
-// LAUREN
 func TestCreateProduct(t *testing.T) {
 	clearDatabase()
 
-	payload := []byte(`{"uuid":1, "status":"inserted",'{"teste1": "teste1"}', '{"hello"}'}`)
+	payload := []byte(`{"status": "inserted","data":"{'teste': 'Teste'}", "steps":"{'ola'}"}`)
 
 	req, err := http.NewRequest("POST", "/workflows", bytes.NewBuffer(payload))
 	if err != nil {
@@ -100,7 +99,6 @@ func TestCreateProduct(t *testing.T) {
 	// verificar dados retornados
 }
 
-// LAUREN
 func TestGetProduct(t *testing.T) {
 	clearDatabase()
 
@@ -120,7 +118,6 @@ func TestGetProduct(t *testing.T) {
 	checkResponseCode(t, http.StatusOK, response.Code)
 }
 
-// LAUREN
 func TestUpdateProduct(t *testing.T) {
 	clearDatabase()
 
@@ -144,7 +141,7 @@ func TestUpdateProduct(t *testing.T) {
 	var originalProduct map[string]interface{}
 	json.Unmarshal(response.Body.Bytes(), &originalProduct)
 
-	payload := []byte(`{"uuid":1, "status":"inserted",'{"teste2": "teste2"}', '{"bye"}'}`)
+	payload := []byte(`{"status": "consumed"}`)
 
 	req, err = http.NewRequest("PATCH", "/workflows/1", bytes.NewBuffer(payload))
 	if err != nil {
@@ -155,12 +152,7 @@ func TestUpdateProduct(t *testing.T) {
 
 	checkResponseCode(t, http.StatusOK, response.Code)
 
-	var m map[string]interface{}
-	json.Unmarshal(response.Body.Bytes(), &m)
-
-	if m["uuid"] != originalProduct["uuid"] {
-		t.Errorf("Expected the uuid to remain the same (%v). Got %v", originalProduct["uuid"], m["uuid"])
-	}
+	// verificar campos alterados
 }
 
 func executeRequest(t *testing.T, r *http.Request) *httptest.ResponseRecorder {

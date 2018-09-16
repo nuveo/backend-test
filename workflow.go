@@ -7,10 +7,10 @@ import (
 
 // workflow reflects the attributes from workflow's table.
 type workflow struct {
-	UUID   int      `json:"UUID"`
-	Status int      `json:"status"`
-	Data   float64  `json:"data"`
-	Steps  []string `json:"steps"`
+	UUID   int    `json:"uuid"`
+	Status string `json:"status"`
+	Data   string `json:"data"`
+	Steps  string `json:"steps"`
 }
 
 func (w *workflow) getWorkflow(db *sql.DB) error {
@@ -31,8 +31,8 @@ func (w *workflow) insertWorkflow(db *sql.DB) error {
 
 func (w *workflow) updateWorkflow(db *sql.DB) error {
 	_, err :=
-		db.Exec("UPDATE workflows SET status=$1, data=$2, steps=$3, WHERE uuid=$4",
-			w.Status, w.Data, w.Steps, w.UUID)
+		db.Exec("UPDATE workflows SET status=$1 WHERE uuid=$2",
+			w.Status, w.UUID)
 	return err
 }
 

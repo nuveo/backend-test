@@ -26,6 +26,14 @@ func (a *App) initializeRoutes() {
 	a.Router.HandleFunc("/workflows/{id:[0-9]+}", a.updateWorkflow).Methods("PATCH")
 }
 
+// workflowRequest reflects the attributes from workflow's table.
+type workflowRequest struct {
+	UUID   int             `json:"uuid"`
+	Status string          `json:"status"`
+	Data   json.RawMessage `json:"data"`
+	Steps  string          `json:"steps"`
+}
+
 // Database starts a connection with the database.
 func (a *App) Database(user, password, dbname string) error {
 	credential := fmt.Sprintf("user=%s password=%s dbname=%s", user, password, dbname)
@@ -103,13 +111,21 @@ func (a *App) Workflows(w http.ResponseWriter, r *http.Request) {
 // createWorkflow creates a new workflow received from payload data.
 func (a *App) createWorkflow(w http.ResponseWriter, r *http.Request) {
 	log.Println("Creating new workflow")
-	var wf workflow
+
+	var wfr workflowRequest
 	decoder := json.NewDecoder(r.Body)
-	if err := decoder.Decode(&wf); err != nil {
+	if err := decoder.Decode(&wfr); err != nil {
 		errorReply(w, http.StatusBadRequest, "Invalid request payload")
 		return
 	}
 	defer r.Body.Close()
+
+	wf := workflow{
+		UUID:   wfr.UUID,
+		Status: wfr.Status,
+		Data:   string(wfr.Data),
+		Steps:  wfr.Steps,
+	}
 
 	if err := wf.insertWorkflow(a.DB); err != nil {
 		errorReply(w, http.StatusInternalServerError, err.Error())
@@ -131,14 +147,17 @@ func (a *App) updateWorkflow(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var wf workflow
-	decoder := json.NewDecoder(r.Body)
-	if err := decoder.Decode(&wf); err != nil {
-		errorReply(w, http.StatusBadRequest, "Invalid resquest payload")
+	wf.UUID = id
+	if err := wf.getWorkflow(a.DB); err != nil {
+		errorReply(w, http.StatusInternalServerError, err.Error())
 		return
 	}
-	defer r.Body.Close()
 
-	wf.UUID = id
+	if wf.Data == "" {
+		errorReply(w, http.StatusInternalServerError, "Workflow not found")
+		return
+	}
+	wf.Status = "consumed"
 
 	if err := wf.updateWorkflow(a.DB); err != nil {
 		errorReply(w, http.StatusInternalServerError, err.Error())
