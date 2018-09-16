@@ -23,8 +23,8 @@ func (w *Workflow) Get(db *sql.DB) error {
 // Insert creates a new workflow in the database.
 func (w *Workflow) Insert(db *sql.DB) error {
 	err := db.QueryRow(
-		"INSERT INTO workflows(status, data, steps) VALUES($1, $2, $3) RETURNING uuid",
-		w.Status, w.Data, pq.Array(&w.Steps)).Scan(&w.UUID)
+		"INSERT INTO workflows(data, steps) VALUES($1, $2) RETURNING uuid",
+		w.Data, pq.Array(&w.Steps)).Scan(&w.UUID)
 	if err != nil {
 		return err
 	}

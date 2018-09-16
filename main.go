@@ -17,10 +17,10 @@ WHEN duplicate_object THEN null;
 END $$;`
 const createExtension = `CREATE EXTENSION IF NOT EXISTS "uuid-ossp";`
 const createTable = `CREATE TABLE IF NOT EXISTS workflows (
-	uuid UUID DEFAULT uuid_generate_v4 (),
-	status status_t DEFAULT 'inserted',
+	uuid UUID DEFAULT uuid_generate_v4(),
+	status status_t DEFAULT 'inserted' NOT NULL,
 	data JSONB NOT NULL,
-	steps text[],
+	steps text[] NOT NULL,
 	PRIMARY KEY (uuid)
 );`
 

@@ -83,9 +83,8 @@ func (a *App) CreateWorkflow(w http.ResponseWriter, r *http.Request) {
 	log.Println("Creating new workflow")
 
 	type decoded struct {
-		Status string          `json:"status"`
-		Data   json.RawMessage `json:"data"`
-		Steps  []string        `json:"steps"`
+		Data  json.RawMessage `json:"data"`
+		Steps []string        `json:"steps"`
 	}
 
 	var d decoded
@@ -97,13 +96,23 @@ func (a *App) CreateWorkflow(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 
 	workflow := Workflow{
-		Status: d.Status,
-		Data:   string(d.Data),
-		Steps:  d.Steps,
+		Data:  string(d.Data),
+		Steps: d.Steps,
 	}
 
 	if err := workflow.Insert(a.DB); err != nil {
 		errorReply(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	// verifies if workflow was successfully inserted in database
+	if err := workflow.Get(a.DB); err != nil {
+		switch err {
+		case sql.ErrNoRows:
+			errorReply(w, http.StatusNotFound, "Workflow not found")
+		default:
+			errorReply(w, http.StatusInternalServerError, err.Error())
+		}
 		return
 	}
 
