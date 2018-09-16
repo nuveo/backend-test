@@ -26,14 +26,6 @@ func (a *App) initializeRoutes() {
 	a.Router.HandleFunc("/workflows/{id:[0-9]+}", a.updateWorkflow).Methods("PATCH")
 }
 
-// WorkflowRequest reflects the attributes from workflow's table.
-type WorkflowRequest struct {
-	UUID   int             `json:"uuid"`
-	Status string          `json:"status"`
-	Data   json.RawMessage `json:"data"`
-	Steps  string          `json:"steps"`
-}
-
 // Database starts a connection with the database.
 func (a *App) Database(user, password, dbname string) error {
 	credential := fmt.Sprintf("user=%s password=%s dbname=%s", user, password, dbname)
@@ -71,8 +63,8 @@ func (a *App) Workflow(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	wf := Workflow{UUID: id}
-	if err := wf.getWorkflow(a.DB); err != nil {
+	workflow := Workflow{UUID: id}
+	if err := workflow.Get(a.DB); err != nil {
 		switch err {
 		case sql.ErrNoRows:
 			errorReply(w, http.StatusNotFound, "Workflow not found")
@@ -82,7 +74,7 @@ func (a *App) Workflow(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	reply(w, http.StatusOK, wf)
+	reply(w, http.StatusOK, workflow)
 }
 
 // Workflows returns all workflows from database.
@@ -99,7 +91,7 @@ func (a *App) Workflows(w http.ResponseWriter, r *http.Request) {
 		start = 0
 	}
 
-	workflows, err := getWorkflows(a.DB, start, count)
+	workflows, err := Workflows(a.DB, start, count)
 	if err != nil {
 		errorReply(w, http.StatusInternalServerError, err.Error())
 		return
@@ -112,29 +104,36 @@ func (a *App) Workflows(w http.ResponseWriter, r *http.Request) {
 func (a *App) createWorkflow(w http.ResponseWriter, r *http.Request) {
 	log.Println("Creating new workflow")
 
-	var wfr WorkflowRequest
+	type decoded struct {
+		UUID   int             `json:"uuid"`
+		Status string          `json:"status"`
+		Data   json.RawMessage `json:"data"`
+		Steps  string          `json:"steps"`
+	}
+
+	var d decoded
 	decoder := json.NewDecoder(r.Body)
-	if err := decoder.Decode(&wfr); err != nil {
+	if err := decoder.Decode(&d); err != nil {
 		errorReply(w, http.StatusBadRequest, "Invalid request payload")
 		return
 	}
 	defer r.Body.Close()
 
-	wf := Workflow{
-		UUID:   wfr.UUID,
-		Status: wfr.Status,
-		Data:   string(wfr.Data),
-		Steps:  wfr.Steps,
+	workflow := Workflow{
+		UUID:   d.UUID,
+		Status: d.Status,
+		Data:   string(d.Data),
+		Steps:  d.Steps,
 	}
 
-	queue.Enqueue(wf)
+	queue.Enqueue(workflow)
 
-	if err := wf.insertWorkflow(a.DB); err != nil {
+	if err := workflow.Insert(a.DB); err != nil {
 		errorReply(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
-	reply(w, http.StatusCreated, wf.UUID)
+	reply(w, http.StatusCreated, workflow.UUID)
 }
 
 // updateWorkflow updates selected workflow with received ID.
@@ -148,28 +147,28 @@ func (a *App) updateWorkflow(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var wf Workflow
-	wf.UUID = id
-	if err := wf.getWorkflow(a.DB); err != nil {
+	var workflow Workflow
+	workflow.UUID = id
+	if err := workflow.Get(a.DB); err != nil {
 		errorReply(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
-	if wf.Data == "" {
+	if workflow.Data == "" {
 		errorReply(w, http.StatusInternalServerError, "Workflow not found")
 		return
 	}
-	wf.Status = "consumed"
+	workflow.Status = "consumed"
 
-	if err := wf.updateWorkflow(a.DB); err != nil {
+	if err := workflow.Update(a.DB); err != nil {
 		errorReply(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
-	reply(w, http.StatusOK, wf)
+	reply(w, http.StatusOK, workflow)
 }
 
-// reply returns request.
+// reply returns request with header.
 func reply(w http.ResponseWriter, code int, payload interface{}) {
 	response, _ := json.Marshal(payload)
 

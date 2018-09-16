@@ -13,12 +13,12 @@ type Workflow struct {
 	Steps  string `json:"steps"`
 }
 
-func (w *Workflow) getWorkflow(db *sql.DB) error {
+func (w *Workflow) Get(db *sql.DB) error {
 	return db.QueryRow("SELECT status, data, steps FROM workflows WHERE uuid=$1",
 		w.UUID).Scan(&w.Status, &w.Data, &w.Steps)
 }
 
-func (w *Workflow) insertWorkflow(db *sql.DB) error {
+func (w *Workflow) Insert(db *sql.DB) error {
 	err := db.QueryRow(
 		"INSERT INTO workflows(status, data, steps) VALUES($1, $2, $3) RETURNING uuid",
 		w.Status, w.Data, w.Steps).Scan(&w.UUID)
@@ -29,14 +29,14 @@ func (w *Workflow) insertWorkflow(db *sql.DB) error {
 	return nil
 }
 
-func (w *Workflow) updateWorkflow(db *sql.DB) error {
+func (w *Workflow) Update(db *sql.DB) error {
 	_, err :=
 		db.Exec("UPDATE workflows SET status=$1 WHERE uuid=$2",
 			w.Status, w.UUID)
 	return err
 }
 
-func getWorkflows(db *sql.DB, start, count int) ([]Workflow, error) {
+func Workflows(db *sql.DB, start, count int) ([]Workflow, error) {
 	rows, err := db.Query(
 		"SELECT uuid, status, data, steps FROM workflows LIMIT $1 OFFSET $2",
 		count, start)
@@ -60,6 +60,6 @@ func getWorkflows(db *sql.DB, start, count int) ([]Workflow, error) {
 	return workflows, nil
 }
 
-func (w *Workflow) consumeWorkflow(db *sql.DB) error {
+func (w *Workflow) Consume(db *sql.DB) error {
 	return errors.New("Not implemented")
 }
