@@ -29,10 +29,8 @@ const createTable = `CREATE TABLE IF NOT EXISTS workflows (
 
 func TestMain(m *testing.M) {
 	a = main.App{}
-	a.InitDatabase(
-		luser,
-		lpassword,
-		ldbname)
+	a.Database(luser, lpassword, ldbname)
+	a.Routes()
 
 	if _, err := a.DB.Exec(createTable); err != nil {
 		log.Fatal(err)
@@ -40,18 +38,20 @@ func TestMain(m *testing.M) {
 
 	code := m.Run()
 
-	a.DB.Exec("DELETE FROM workflows")
-	a.DB.Exec("ALTER SEQUENCE workflows_uuid_seq RESTART WITH 1")
+	clearDatabase()
 
 	os.Exit(code)
 }
 
 func TestEmptyTable(t *testing.T) {
-	a.DB.Exec("DELETE FROM workflows")
-	a.DB.Exec("ALTER SEQUENCE workflows_id_seq RESTART WITH 1")
+	clearDatabase()
 
-	req, _ := http.NewRequest("GET", "/workflows", nil)
-	response := executeRequest(req)
+	req, err := http.NewRequest("GET", "/workflows", nil)
+	if err != nil {
+		t.Errorf("Failed on creating a new GET request: %v", err)
+	}
+
+	response := executeRequest(t, req)
 
 	checkResponseCode(t, http.StatusOK, response.Code)
 
@@ -60,12 +60,15 @@ func TestEmptyTable(t *testing.T) {
 	}
 }
 
-func TestGetNonExistentProduct(t *testing.T) {
-	a.DB.Exec("DELETE FROM workflows")
-	a.DB.Exec("ALTER SEQUENCE workflows_uuid_seq RESTART WITH 1")
+func TestGetNonExistentWorkflow(t *testing.T) {
+	clearDatabase()
 
-	req, _ := http.NewRequest("GET", "/workflow/11", nil)
-	response := executeRequest(req)
+	req, err := http.NewRequest("GET", "/workflows/11", nil)
+	if err != nil {
+		t.Errorf("Failed on creating a new GET request: %v", err)
+	}
+
+	response := executeRequest(t, req)
 
 	checkResponseCode(t, http.StatusNotFound, response.Code)
 
@@ -76,27 +79,32 @@ func TestGetNonExistentProduct(t *testing.T) {
 	}
 }
 
+// LAUREN
 func TestCreateProduct(t *testing.T) {
-	a.DB.Exec("DELETE FROM workflows")
-	a.DB.Exec("ALTER SEQUENCE workflows_uuid_seq RESTART WITH 1")
+	clearDatabase()
 
 	payload := []byte(`{"uuid":1, "status":"inserted",'{"teste1": "teste1"}', '{"hello"}'}`)
 
-	req, _ := http.NewRequest("POST", "/workflow", bytes.NewBuffer(payload))
-	response := executeRequest(req)
+	req, err := http.NewRequest("POST", "/workflows", bytes.NewBuffer(payload))
+	if err != nil {
+		t.Errorf("Failed on creating a new POST request: %v", err)
+	}
+
+	response := executeRequest(t, req)
 
 	checkResponseCode(t, http.StatusCreated, response.Code)
 
 	var m map[string]interface{}
 	json.Unmarshal(response.Body.Bytes(), &m)
 
+	// verificar dados retornados
 }
 
+// LAUREN
 func TestGetProduct(t *testing.T) {
-	a.DB.Exec("DELETE FROM workflows")
-	a.DB.Exec("ALTER SEQUENCE workflows_uuid_seq RESTART WITH 1")
+	clearDatabase()
 
-	count := 1
+	count := 1 // verificar count
 
 	if count < 1 {
 		count = 1
@@ -106,15 +114,15 @@ func TestGetProduct(t *testing.T) {
 		a.DB.Exec("INSERT INTO workflows(status, data, steps) VALUES($1, $2, $3)", "inserted", "{\"teste1\": \"teste1\"}", "{\"hello\"}")
 	}
 
-	req, _ := http.NewRequest("GET", "/workflow/1", nil)
-	response := executeRequest(req)
+	req, _ := http.NewRequest("GET", "/workflows/1", nil)
+	response := executeRequest(t, req)
 
 	checkResponseCode(t, http.StatusOK, response.Code)
 }
 
+// LAUREN
 func TestUpdateProduct(t *testing.T) {
-	a.DB.Exec("DELETE FROM workflows")
-	a.DB.Exec("ALTER SEQUENCE workflows_uuid_seq RESTART WITH 1")
+	clearDatabase()
 
 	count := 1
 
@@ -126,15 +134,24 @@ func TestUpdateProduct(t *testing.T) {
 		a.DB.Exec("INSERT INTO workflows(status, data, steps) VALUES($1, $2, $3)", "inserted", "{\"teste1\": \"teste1\"}", "{\"hello\"}")
 	}
 
-	req, _ := http.NewRequest("GET", "/workflow/1", nil)
-	response := executeRequest(req)
+	req, err := http.NewRequest("GET", "/workflow/1", nil)
+	if err != nil {
+		t.Errorf("Failed on creating a new GET request: %v", err)
+	}
+
+	response := executeRequest(t, req)
+
 	var originalProduct map[string]interface{}
 	json.Unmarshal(response.Body.Bytes(), &originalProduct)
 
 	payload := []byte(`{"uuid":1, "status":"inserted",'{"teste2": "teste2"}', '{"bye"}'}`)
 
-	req, _ = http.NewRequest("PUT", "/workflows/1", bytes.NewBuffer(payload))
-	response = executeRequest(req)
+	req, err = http.NewRequest("PATCH", "/workflows/1", bytes.NewBuffer(payload))
+	if err != nil {
+		t.Errorf("Failed on creating a new PATCH request: %v", err)
+	}
+
+	response = executeRequest(t, req)
 
 	checkResponseCode(t, http.StatusOK, response.Code)
 
@@ -146,15 +163,23 @@ func TestUpdateProduct(t *testing.T) {
 	}
 }
 
-func executeRequest(req *http.Request) *httptest.ResponseRecorder {
-	rr := httptest.NewRecorder()
-	a.Router.ServeHTTP(rr, req)
+func executeRequest(t *testing.T, r *http.Request) *httptest.ResponseRecorder {
+	t.Log("Executing request")
 
-	return rr
+	recorder := httptest.NewRecorder()
+	a.Router.ServeHTTP(recorder, r)
+
+	return recorder
 }
 
 func checkResponseCode(t *testing.T, expected, actual int) {
+	t.Log("Checking response code")
 	if expected != actual {
 		t.Errorf("Expected response code %d. Got %d\n", expected, actual)
 	}
+}
+
+func clearDatabase() {
+	a.DB.Exec("DELETE FROM workflows")
+	a.DB.Exec("ALTER SEQUENCE workflows_uuid_seq RESTART WITH 1")
 }
