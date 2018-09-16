@@ -100,25 +100,6 @@ func TestCreateProduct(t *testing.T) {
 	// verificar dados retornados
 }
 
-func TestGetProduct(t *testing.T) {
-	clearDatabase()
-
-	count := 1 // verificar count
-
-	if count < 1 {
-		count = 1
-	}
-
-	for i := 0; i < count; i++ {
-		a.DB.Exec("INSERT INTO workflows(status, data, steps) VALUES($1, $2, $3)", "inserted", "{\"teste1\": \"teste1\"}", "{\"hello\"}")
-	}
-
-	req, _ := http.NewRequest("GET", "/workflows/1", nil)
-	response := executeRequest(t, req)
-
-	checkResponseCode(t, http.StatusOK, response.Code)
-}
-
 // LAUREN corrigir recebendo UUID
 func TestUpdateProduct(t *testing.T) {
 	clearDatabase()
