@@ -2,15 +2,12 @@ package main
 
 import (
 	"log"
+	"os"
 )
 
 var (
-	luser     = "postgres"
-	lpassword = "1234"
-	ldbname   = "nuveo"
-	port      = ":8889"
-	db        = "postgres"
-	queue     ItemQueue
+	port  = ":8889"
+	queue ItemQueue
 )
 
 const createEnum = `DO $$ BEGIN
@@ -27,31 +24,37 @@ const createTable = `CREATE TABLE IF NOT EXISTS workflows (
 	PRIMARY KEY (uuid)
 );`
 
+// Credentials contains user credentials.
+type Credentials struct {
+	User     string
+	Password string
+	Database string
+}
+
 func main() {
-	// Receber flags com dados
-	log.Println("Database credentials succesfully received")
+	if len(os.Args) <= 3 {
+		log.Fatalf("The system couldn't start application: arguments are missing")
+	}
+	c := Credentials{User: os.Args[1], Password: os.Args[2], Database: os.Args[3]}
+	log.Println("Database credentials successfully received")
 
 	var a App
-
-	if err := a.Database(luser, lpassword, ldbname); err != nil {
+	if err := a.Connect(c.User, c.Password, c.Database); err != nil {
 		log.Fatalf("The system couldn't open a database connection: %v", err)
 	}
-	log.Println("Database succesfully connected")
+	log.Println("Database successfully connected")
 
-	if _, err := a.DB.Exec(createEnum); err != nil {
-		log.Fatalf("The system couldn't create status type: %v", err)
+	if err := a.Prepare(); err != nil {
+		log.Fatalf("The system couldn't prepare database: %v", err)
 	}
-	if _, err := a.DB.Exec(createTable); err != nil {
-		log.Fatalf("The system couldn't create workflow table: %v", err)
-	}
-	log.Println("Workflow table ready to go")
+	log.Println("Database successfully prepared")
 
 	a.Routes()
-	log.Println("Routes succesfully initiated")
+	log.Println("Routes successfully initiated")
 
 	queue.New()
-	log.Println("Queue succesfully created")
+	log.Println("Queue successfully created")
 
-	log.Println("Application running at port " + port)
+	log.Println("Application running on localhost" + port)
 	a.Run(port)
 }

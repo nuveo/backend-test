@@ -28,16 +28,27 @@ func (a *App) initializeRoutes() {
 	a.Router.HandleFunc("/workflows/consume", a.ConsumeWorkflow).Methods("GET")
 }
 
-// Database starts a connection with the database.
-func (a *App) Database(user, password, dbname string) error {
-	credential := fmt.Sprintf("user=%s password=%s dbname=%s", user, password, dbname)
+// Connect starts a connection with the database.
+func (a *App) Connect(user, password, dbname string) error {
+	credentials := fmt.Sprintf("user=%s password=%s dbname=%s", user, password, dbname)
 
 	var err error
-	a.DB, err = sql.Open(db, credential)
+	a.DB, err = sql.Open("postgres", credentials)
 	if err != nil {
 		return err
 	}
 
+	return nil
+}
+
+// Prepare installs missing table and/or extensions and prepares database.
+func (a *App) Prepare() error {
+	if _, err := a.DB.Exec(createEnum); err != nil {
+		return err
+	}
+	if _, err := a.DB.Exec(createTable); err != nil {
+		return err
+	}
 	return nil
 }
 
