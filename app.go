@@ -21,6 +21,7 @@ const (
 	errGetWorkflows     = "Failed to get workflows: "
 	errUpdateWorkflow   = "Failed to update workflow: "
 	errInsertWorkflow   = "Failed to insert workflow: "
+	errConsumeWorkflow  = "Failed to consume workflow: "
 	errInvalidPayload   = "Invalid request payload: "
 	errWorkflowNotFound = "Workflow not found"
 )
@@ -85,6 +86,7 @@ func (a *App) Workflows(w http.ResponseWriter, r *http.Request) {
 
 	workflows, err := Workflows(a.DB)
 	if err != nil {
+		log.Println(errGetWorkflows + err.Error())
 		errorReply(w, http.StatusInternalServerError, errGetWorkflows+err.Error())
 		return
 	}
@@ -104,6 +106,7 @@ func (a *App) CreateWorkflow(w http.ResponseWriter, r *http.Request) {
 	var d decoded
 	decoder := json.NewDecoder(r.Body)
 	if err := decoder.Decode(&d); err != nil {
+		log.Println(errInsertWorkflow + errInvalidPayload + err.Error())
 		errorReply(w, http.StatusBadRequest, errInvalidPayload+err.Error())
 		return
 	}
@@ -116,6 +119,7 @@ func (a *App) CreateWorkflow(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := workflow.Insert(a.DB); err != nil {
+		log.Println(errInsertWorkflow + err.Error())
 		errorReply(w, http.StatusInternalServerError, errInsertWorkflow+err.Error())
 		return
 	}
@@ -124,8 +128,10 @@ func (a *App) CreateWorkflow(w http.ResponseWriter, r *http.Request) {
 	if err := workflow.Get(a.DB); err != nil {
 		switch err {
 		case sql.ErrNoRows:
+			log.Println(errInsertWorkflow + errWorkflowNotFound)
 			errorReply(w, http.StatusNotFound, errWorkflowNotFound)
 		default:
+			log.Println(errInsertWorkflow + err.Error())
 			errorReply(w, http.StatusInternalServerError, errGetWorkflow+err.Error())
 		}
 		return
@@ -147,8 +153,10 @@ func (a *App) UpdateWorkflow(w http.ResponseWriter, r *http.Request) {
 	if err := workflow.Get(a.DB); err != nil {
 		switch err {
 		case sql.ErrNoRows:
+			log.Println(errUpdateWorkflow + errWorkflowNotFound)
 			errorReply(w, http.StatusNotFound, errWorkflowNotFound)
 		default:
+			log.Println(errUpdateWorkflow + err.Error())
 			errorReply(w, http.StatusInternalServerError, errGetWorkflow+err.Error())
 		}
 		return
@@ -157,6 +165,7 @@ func (a *App) UpdateWorkflow(w http.ResponseWriter, r *http.Request) {
 	queue.Remove(workflow.UUID)
 
 	if workflow.Status == consumedStatus {
+		log.Println(errUpdateWorkflow + errConsumedWorkflow)
 		errorReply(w, http.StatusInternalServerError, errConsumedWorkflow)
 		return
 	}
@@ -164,6 +173,7 @@ func (a *App) UpdateWorkflow(w http.ResponseWriter, r *http.Request) {
 	workflow.Status = consumedStatus
 
 	if err := workflow.Update(a.DB); err != nil {
+		log.Println(errUpdateWorkflow + err.Error())
 		errorReply(w, http.StatusInternalServerError, errUpdateWorkflow+err.Error())
 		return
 	}
@@ -177,6 +187,7 @@ func (a *App) ConsumeWorkflow(w http.ResponseWriter, r *http.Request) {
 	log.Printf("Consuming workflow")
 
 	if queue.IsEmpty() {
+		log.Println(errConsumeWorkflow + errEmptyQueue)
 		errorReply(w, http.StatusInternalServerError, errEmptyQueue)
 		return
 	}
@@ -189,6 +200,7 @@ func (a *App) ConsumeWorkflow(w http.ResponseWriter, r *http.Request) {
 	workflow := queue.Dequeue()
 	file, err := os.Create(fmt.Sprintf("%s/workflows/%s.csv", path, workflow.UUID))
 	if err != nil {
+		log.Println(errConsumeWorkflow + err.Error())
 		errorReply(w, http.StatusInternalServerError, err.Error())
 		return
 	}
@@ -201,18 +213,20 @@ func (a *App) ConsumeWorkflow(w http.ResponseWriter, r *http.Request) {
 	data = append(data, workflow.Data)
 
 	if err := writer.Write(data); err != nil {
+		log.Println(errConsumeWorkflow + err.Error())
 		errorReply(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
 	workflow.Status = consumedStatus
 	if err := workflow.Update(a.DB); err != nil {
+		log.Println(errConsumeWorkflow + err.Error())
 		errorReply(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
-	log.Printf("Workflow %s consumed and CSV file generated successfully", workflow.UUID)
-	reply(w, http.StatusOK, "Workflow "+workflow.UUID+" consumed and CSV file generated successfully")
+	log.Printf("Workflow %s consumed and CSV file generated successfully inside 'workflows' folder", workflow.UUID)
+	reply(w, http.StatusOK, "")
 }
 
 // reply returns request with header.
