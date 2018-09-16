@@ -35,7 +35,7 @@ func (w *ItemQueue) Dequeue() Workflow {
 }
 
 // Remove removes the selected workflow Item from the the queue.
-func (w *ItemQueue) Remove(id int) {
+func (w *ItemQueue) Remove(id string) {
 	w.lock.Lock()
 	for i, v := range w.items {
 		if v.UUID == id {

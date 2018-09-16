@@ -25,8 +25,8 @@ type App struct {
 func (a *App) initializeRoutes() {
 	a.Router.HandleFunc("/workflows", a.Workflows).Methods("GET")
 	a.Router.HandleFunc("/workflows", a.CreateWorkflow).Methods("POST")
-	a.Router.HandleFunc("/workflows/{id:[0-9]+}", a.Workflow).Methods("GET") // extra endpoint for testing purposes
-	a.Router.HandleFunc("/workflows/{id:[0-9]+}", a.UpdateWorkflow).Methods("PATCH")
+	a.Router.HandleFunc("/workflows/{id}", a.Workflow).Methods("GET") // extra endpoint for testing purposes
+	a.Router.HandleFunc("/workflows/{id}", a.UpdateWorkflow).Methods("PATCH")
 	a.Router.HandleFunc("/workflows/consume", a.ConsumeWorkflow).Methods("GET")
 }
 
@@ -61,13 +61,7 @@ func (a *App) Workflow(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	log.Println("Returning workflow " + vars["id"])
 
-	id, err := strconv.Atoi(vars["id"])
-	if err != nil {
-		errorReply(w, http.StatusBadRequest, "Invalid workflow ID")
-		return
-	}
-
-	workflow := Workflow{UUID: id}
+	workflow := Workflow{UUID: vars["id"]}
 	if err := workflow.Get(a.DB); err != nil {
 		switch err {
 		case sql.ErrNoRows:
@@ -143,14 +137,8 @@ func (a *App) UpdateWorkflow(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	log.Println("Updating workflow " + vars["id"])
 
-	id, err := strconv.Atoi(vars["id"])
-	if err != nil {
-		errorReply(w, http.StatusBadRequest, "Invalid workflow UUID")
-		return
-	}
-
 	var workflow Workflow
-	workflow.UUID = id
+	workflow.UUID = vars["id"]
 	if err := workflow.Get(a.DB); err != nil {
 		switch err {
 		case sql.ErrNoRows:
@@ -192,7 +180,7 @@ func (a *App) ConsumeWorkflow(w http.ResponseWriter, r *http.Request) {
 
 	workflow := queue.Dequeue()
 	id := workflow.UUID
-	fileName := fmt.Sprintf("%d", id) + "-workflow.csv"
+	fileName := id + ".csv"
 
 	file, err := os.Create(path + "/data/" + fileName)
 	if err != nil {
