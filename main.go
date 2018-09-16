@@ -13,14 +13,14 @@ import (
 func main() {
 	// port := os.Getenv("PORT")
 	port := "8000"
-
 	if port == "" {
 		log.Fatal("$PORT must be set")
 	}
+
 	//Crate routes
 	router := routers.NewRouter()
 
-	//Consumes a workflow item from a queue
+	//Consume a workflow item from a queue
 	consumer := consumers.WorkflowConsumer{}
 	go consumer.Run()
 

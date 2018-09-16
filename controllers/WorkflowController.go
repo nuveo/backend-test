@@ -1,14 +1,22 @@
+/********************************************************
+* Author: Vagner Clementino
+* Date: 16/09/2018
+********************************************************/
 package controllers
 
 import (
 	"backend-test/exceptions"
 	"backend-test/models"
 	"backend-test/repositories"
+	"bytes"
+	"encoding/csv"
 	"encoding/json"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/gorilla/mux"
 	"github.com/satori/go.uuid"
@@ -155,17 +163,45 @@ func (c *Controller) UpdateWorkflow(w http.ResponseWriter, r *http.Request) {
 
 // ConsumeWorkflows GET /consume
 func (c *Controller) ConsumeWorkflows(w http.ResponseWriter, r *http.Request) {
-	workflows, err := c.Repo.ConsumeFromQueue()
+	workflowList, err := c.Repo.ConsumeFromQueue()
 	if err != nil {
 		data, _ := json.Marshal(exceptions.WorkflowException{Message: err.Error()})
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write(data)
 		return
 	}
-	data, _ := json.Marshal(workflows)
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	w.Header().Set("Access-Control-Allow-Origin", "*")
+
+	// just some test data to use for the wr.Writer() method below.
+	record := []string{}
+	var workflowData models.WorkflowData
+
+	b := &bytes.Buffer{}   // creates IO Writer
+	wr := csv.NewWriter(b) // creates a csv writer that uses the io buffer.
+
+	//Adds headers
+	record = append(record, "Name")
+	record = append(record, "Description")
+	wr.Write(record)
+
+	record = nil
+	for _, workflow := range workflowList {
+
+		err2 := json.Unmarshal(workflow.Data, &workflowData)
+		if err2 != nil {
+			fmt.Println("error:", err2)
+			os.Exit(1)
+		}
+		record = append(record, workflowData.Name)
+		record = append(record, workflowData.Description)
+
+		wr.Write(record)
+		record = nil
+	}
+	wr.Flush()
+	// data, _ := json.Marshal(workflows)
+	w.Header().Set("Content-Type", "text/csv; charset=UTF-8")
+	w.Header().Set("Content-Disposition", "attachment;filename=WorkflowData.csv")
 	w.WriteHeader(http.StatusOK)
-	w.Write(data)
+	w.Write(b.Bytes())
 	return
 }
