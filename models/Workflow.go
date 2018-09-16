@@ -1,3 +1,4 @@
+// Package models provides entities to workflow API
 package models
 
 import (

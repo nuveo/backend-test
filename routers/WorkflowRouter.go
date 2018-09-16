@@ -1,3 +1,5 @@
+// Package consumers provides consumers that mostly waits to receive messages
+// from a rabbitqm's queue
 package routers
 
 import (

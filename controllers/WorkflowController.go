@@ -1,7 +1,4 @@
-/********************************************************
-* Author: Vagner Clementino
-* Date: 16/09/2018
-********************************************************/
+// Package controllers provides controllers types
 package controllers
 
 import (
@@ -11,46 +8,54 @@ import (
 	"bytes"
 	"encoding/csv"
 	"encoding/json"
-	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
-	"os"
 
 	"github.com/gorilla/mux"
 	"github.com/satori/go.uuid"
 )
 
-//Controller ...
+//Controller receives a request and defines the function that handles it
 type Controller struct {
 	Repo repositories.WorkflowRepository
 }
 
-//ListWorkflows GET /workflow
+//ListWorkflows finds all workflows and returns as json list. If error, return
+//a json with error's message
 func (c *Controller) ListWorkflows(w http.ResponseWriter, r *http.Request) {
-	workflows, err := c.Repo.FindAll() // list of all products
+
+	//list of all workflows
+	workflowList, err := c.Repo.FindAll()
+
+	//Return a custom exception with erros's message
 	if err != nil {
 		data, _ := json.Marshal(exceptions.WorkflowException{Message: err.Error()})
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write(data)
 		return
 	}
+
+	//Setting response header
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	w.Header().Set("Access-Control-Allow-Origin", "*")
-	data, _ := json.Marshal(workflows)
+
+	//Marshals to json type
+	data, _ := json.Marshal(workflowList)
 	w.WriteHeader(http.StatusOK)
 	w.Write(data)
 	return
 }
 
-// AddWorkflow POST /workflow
+//AddWorkflow POST inserts a workflow to repository data. Returns the Workflow
+//that was created
 func (c *Controller) AddWorkflow(w http.ResponseWriter, r *http.Request) {
+
 	var workflow models.Workflow
 
-	// read the body of the request
+	//read the body of the request
 	body, err := ioutil.ReadAll(io.LimitReader(r.Body, 1048576))
-	// log.Println(body)
 
 	if err != nil {
 		data, _ := json.Marshal(exceptions.WorkflowException{Message: err.Error()})
@@ -59,6 +64,7 @@ func (c *Controller) AddWorkflow(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	//Marshal body from a json string to a workflow item
 	if err := r.Body.Close(); err != nil {
 		data, _ := json.Marshal(exceptions.WorkflowException{Message: err.Error()})
 		w.WriteHeader(http.StatusInternalServerError)
@@ -66,8 +72,9 @@ func (c *Controller) AddWorkflow(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Unmarshall body contents as a type Workflow
 	if err := json.Unmarshal(body, &workflow); err != nil {
-		// unmarshall body contents as a type Candidate
+
 		w.WriteHeader(422) // unprocessable entity
 		log.Println(err)
 		if err := json.NewEncoder(w).Encode(err); err != nil {
@@ -78,8 +85,7 @@ func (c *Controller) AddWorkflow(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	log.Println(workflow)
-	// adds the product to the DB
+	// adds the workflow to the repository
 	_, err = c.Repo.Save(workflow)
 	if err != nil {
 		data, _ := json.Marshal(exceptions.WorkflowException{Message: err.Error()})
@@ -90,18 +96,21 @@ func (c *Controller) AddWorkflow(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	w.WriteHeader(http.StatusCreated)
+
 	data, _ := json.Marshal(workflow)
 	w.Write(data)
 	return
 }
 
-//UpdateWorkflow Update status from a specific workflow PATCH /
+//UpdateWorkflow Update status from a specific workflow
 func (c *Controller) UpdateWorkflow(w http.ResponseWriter, r *http.Request) {
+
 	var workflow models.Workflow
 
 	vars := mux.Vars(r)
 
-	body, err := ioutil.ReadAll(io.LimitReader(r.Body, 1048576)) // read the body of the request
+	// read the body of the request
+	body, err := ioutil.ReadAll(io.LimitReader(r.Body, 1048576))
 	if err != nil {
 		data, _ := json.Marshal(exceptions.WorkflowException{Message: err.Error()})
 		w.WriteHeader(http.StatusInternalServerError)
@@ -119,34 +128,32 @@ func (c *Controller) UpdateWorkflow(w http.ResponseWriter, r *http.Request) {
 	// unmarshall body contents as a type Candidate
 	if err := json.Unmarshal(body, &workflow); err != nil {
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-		w.WriteHeader(422) // unprocessable entity
+		w.WriteHeader(422)
 		data, _ := json.Marshal(exceptions.WorkflowException{Message: err.Error()})
 		w.Write(data)
 		return
 	}
 
 	if err := json.NewEncoder(w).Encode(err); err != nil {
-		// log.Fatalln("Error UpdateProduct unmarshalling data", err)
 		data, _ := json.Marshal(exceptions.WorkflowException{Message: err.Error()})
 		w.Write(data)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	//uuidValue := strings.Replace(vars["uuid"], "-", "", -1) // param id
+	//Gets UUID from path variable /{UUID}
 	uuidValue := vars["UUID"]
-	log.Println("Parsed UUID:" + uuidValue)
+	//Create a UUID type from string
 
 	uuidWorkflow, err := uuid.FromString(uuidValue)
 	if err != nil {
-		log.Fatalln("Something went wrong:", err)
 		data, _ := json.Marshal(exceptions.WorkflowException{Message: err.Error()})
 		w.Write(data)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	// updates the product in the DB
+	// updates the workflow in the repository
 	workflow.UUID = uuidWorkflow
 	_, err = c.Repo.Update(workflow)
 	if err != nil {
@@ -161,8 +168,13 @@ func (c *Controller) UpdateWorkflow(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
-// ConsumeWorkflows GET /consume
+//ConsumeWorkflows finds all workflows was consumed from a queue and returns as
+//json list. If error, return a json with error's message
 func (c *Controller) ConsumeWorkflows(w http.ResponseWriter, r *http.Request) {
+
+	var workflowData models.WorkflowData
+
+	//Get a list for consumed items from a queue
 	workflowList, err := c.Repo.ConsumeFromQueue()
 	if err != nil {
 		data, _ := json.Marshal(exceptions.WorkflowException{Message: err.Error()})
@@ -171,10 +183,8 @@ func (c *Controller) ConsumeWorkflows(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// just some test data to use for the wr.Writer() method below.
+	//write workflow list as csv file
 	record := []string{}
-	var workflowData models.WorkflowData
-
 	b := &bytes.Buffer{}   // creates IO Writer
 	wr := csv.NewWriter(b) // creates a csv writer that uses the io buffer.
 
@@ -182,14 +192,17 @@ func (c *Controller) ConsumeWorkflows(w http.ResponseWriter, r *http.Request) {
 	record = append(record, "Name")
 	record = append(record, "Description")
 	wr.Write(record)
-
 	record = nil
+
+	//Adds workflow items to csv writer
 	for _, workflow := range workflowList {
 
-		err2 := json.Unmarshal(workflow.Data, &workflowData)
-		if err2 != nil {
-			fmt.Println("error:", err2)
-			os.Exit(1)
+		err := json.Unmarshal(workflow.Data, &workflowData)
+		if err != nil {
+			data, _ := json.Marshal(exceptions.WorkflowException{Message: err.Error()})
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write(data)
+			return
 		}
 		record = append(record, workflowData.Name)
 		record = append(record, workflowData.Description)
@@ -197,11 +210,14 @@ func (c *Controller) ConsumeWorkflows(w http.ResponseWriter, r *http.Request) {
 		wr.Write(record)
 		record = nil
 	}
+	//Flush data to writer
 	wr.Flush()
-	// data, _ := json.Marshal(workflows)
+
+	//Setting header
 	w.Header().Set("Content-Type", "text/csv; charset=UTF-8")
 	w.Header().Set("Content-Disposition", "attachment;filename=WorkflowData.csv")
 	w.WriteHeader(http.StatusOK)
+
 	w.Write(b.Bytes())
 	return
 }

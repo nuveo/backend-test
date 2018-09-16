@@ -1,15 +1,13 @@
+// Package respositories provides types to handles data access
 package repositories
 
 import (
 	"backend-test/models"
 	"fmt"
 
-	// "log"
-
 	"github.com/jinzhu/gorm"
 	"github.com/satori/go.uuid"
 
-	//
 	_ "github.com/jinzhu/gorm/dialects/postgres"
 )
 
@@ -23,19 +21,17 @@ var sslmode = "disable"
 
 var dns = fmt.Sprintf("host=%s port=%s user=%s dbname=%s password=%s sslmode=%s", host, port, user, dbname, password, sslmode)
 
-//PostgresRepository ...
+//PostgresRepository implements Repository interface to allow access to
+//Postgres database
 type PostgresRepository struct {
 	Db *gorm.DB
 }
 
-//NewConnection ...
+//NewConnection  cretes a connection to a Postgres database
 func NewConnection() (*gorm.DB, error) {
 
 	dbConn, err := gorm.Open("postgres", dns)
 	dbConn.LogMode(true)
-	// if err != nil {
-	// 	log.Fatalln("Error in connect to database", err)
-	// }
 	return dbConn, err
 }
 

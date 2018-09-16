@@ -1,3 +1,4 @@
+// Package respositories provides types to handles data access
 package repositories
 
 import (
