@@ -26,7 +26,7 @@ Fork this project in a private project and create a branch. When you want to our
 
 ## Technologies
 
-- Go, C or C++
+- Go, C, C++ or Python
 - PostgreSQL
 - A message queue that you choose, but describe why you choose.
 - [pREST](http://postgres.rest) to comunicate with database. It is a bonus.
