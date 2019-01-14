@@ -1,9 +1,9 @@
 tags:
   - "Workflow by uuid"
-summary: "Return a CSV file with the workflow.Data"
-description: "Consume a workflow from queue and generate a CSV file with workflow.Data"
+summary: "Return a unique workflow"
+description: "Return a unique workflow querying by uuid"
 produces:
-  - "text/csv"
+  - "application/json"
 parameters:
 - name: "uuid"
   in: "path"
@@ -12,11 +12,9 @@ parameters:
   type: "string"
 responses:
   200:
-    description: "Workflow object"
+    description: "Workflow array with result object"
     schema:
       type: "object"
-      items:
-        $ref: "#/definitions/Workflow"
   400:
     description: "Not found"
 definitions:
