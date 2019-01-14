@@ -2,6 +2,7 @@
     API para Workflow
 """
 import os
+import json
 import uuid
 import requests
 from flask import (
@@ -61,7 +62,7 @@ def workflow():
         data = {
             'uuid': str(uuid.uuid4()),
             'status': body.get('status'),
-            'data': body.get('data'),
+            'data': json.dumps(body.get('data')),
             'steps': body.get('steps'),
         }
 
