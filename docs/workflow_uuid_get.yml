@@ -5,7 +5,7 @@ description: "Return a unique workflow querying by uuid"
 produces:
   - "application/json"
 parameters:
-- name: "uuid"
+- name: "_uuid"
   in: "path"
   description: "Unique workflow identifier"
   required: true
