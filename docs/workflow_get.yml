@@ -1,13 +1,13 @@
 tags:
-  - "workflow"
+  - "Workflow"
 summary:
-  - "Return a CSV file with the workflow.Data"
+  - "Return all Workflows"
 description:
-  - "Consume a workflow from queue and generate a CSV file with workflow.Data"
+  - "Return all Workflows from database"
 produces:
-  - "text/csv"
+  - "application/json"
 responses:
   200:
-    description: "Workflow object"
+    description: "Workflow array"
   400:
     description: "Not found"
