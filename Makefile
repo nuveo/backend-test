@@ -7,4 +7,7 @@ lint:
 run:
 	flask run
 test:
-	prest migrate workflow_test up
+	python tests.py
+
+producer:
+	python producer.py
