@@ -6,3 +6,5 @@ lint:
 	
 run:
 	flask run
+test:
+	prest migrate workflow_test up
