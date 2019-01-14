@@ -2,18 +2,25 @@
     API para Workflow
 """
 import os
-from flask import Flask
-from flasgger import swag_from, Swagger
+import requests
+from flask import (
+    Flask, 
+    request
+)
+from flasgger import (
+    swag_from, 
+    Swagger
+)
 
 
-PREST = {
+PREST_INFO = {
     'host': os.getenv('API_PREST_HOST'),
     'port': os.getenv('API_PREST_PORT'),
     'db': os.getenv('API_PREST_DB_NAME'),
     'schema': os.getenv('API_PREST_DB_SCHEMA')
 }
 
-BASE_URL = f'{PREST['host']}:{PREST['port']}/{PREST['db']}/{PREST['schema']}/'
+BASE_URL = 'http://{host}:{port}/{db}/{schema}'.format(**PREST_INFO)
 
 app = Flask(__name__)
 swagger = Swagger(app)
@@ -35,7 +42,19 @@ def workflow():
     """
         Get all or insert one workflow on database and queue
     """
-    return 'Single Workflow returned'
+    def _get():
+        return requests.get(f'{BASE_URL}/workflow').content
+
+    def _post():
+        requests.post(f'{BASE_URL}/workflow', json=request.data)
+        return request.data
+
+    _workflow = {
+        'GET': _get,
+        'POST': _post
+    }
+
+    return _workflow[request.method]()
 
 @app.route('/workflow/<uuid>', methods=['GET', 'PATCH'], endpoint='workflow_uuid')
 @swag_from('docs/workflow_uuid_get.yml', endpoint='workflow_uuid', methods=['GET'])
