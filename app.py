@@ -75,7 +75,7 @@ def workflow():
 
     return _workflow[request.method]()
 
-@app.route('/workflow/<uuid>', methods=['GET', 'PATCH'], endpoint='workflow_uuid')
+@app.route('/workflow/<_uuid>', methods=['GET', 'PATCH'], endpoint='workflow_uuid')
 @swag_from('docs/workflow_uuid_get.yml', endpoint='workflow_uuid', methods=['GET'])
 @swag_from('docs/workflow_uuid_patch.yml', endpoint='workflow_uuid', methods=['PATCH'])
 def workflow_uuid(_uuid=None):
