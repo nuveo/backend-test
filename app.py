@@ -65,8 +65,8 @@ def workflow():
             'steps': body.get('steps'),
         }
 
-        resp = requests.post(f'{BASE_URL}/workflow/', json=data)
-        return jsonify(data), resp.status_code
+        resp = requests.post(f'{BASE_URL}/workflow', json=data)
+        return resp.content, resp.status_code
 
     _workflow = {
         'GET': _get,
