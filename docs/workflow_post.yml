@@ -8,3 +8,7 @@ parameters:
 responses:
   200:
     description: "Workflow object"
+  400:
+    description: "Body message is not a valid json"
+  403:
+    description: "Body have unsuported status type"
