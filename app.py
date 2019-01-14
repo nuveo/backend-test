@@ -1,12 +1,23 @@
 """
     API para Workflow
 """
+import os
 from flask import Flask
 from flasgger import swag_from, Swagger
 
 
+PREST = {
+    'host': os.getenv('API_PREST_HOST'),
+    'port': os.getenv('API_PREST_PORT'),
+    'db': os.getenv('API_PREST_DB_NAME'),
+    'schema': os.getenv('API_PREST_DB_SCHEMA')
+}
+
+BASE_URL = f'{PREST['host']}:{PREST['port']}/{PREST['db']}/{PREST['schema']}/'
+
 app = Flask(__name__)
 swagger = Swagger(app)
+
 
 @app.route('/')
 @swag_from('docs/index.yml')
@@ -15,6 +26,7 @@ def index():
         Rota principal
     """
     return 'Hello World'
+
 
 @app.route('/workflow/', methods=['GET', 'POST'], endpoint='workflow')
 @swag_from('docs/workflow_get.yml', endpoint='workflow', methods=['GET'])
