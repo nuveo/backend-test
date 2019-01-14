@@ -2,13 +2,16 @@
     API para Workflow
 """
 import os
+import uuid
 import requests
 from flask import (
     Flask, 
-    request
+    request,
+    abort,
+    jsonify
 )
 from flasgger import (
-    swag_from, 
+    swag_from,
     Swagger
 )
 
@@ -40,14 +43,29 @@ def index():
 @swag_from('docs/workflow_post.yml', endpoint='workflow', methods=['POST'])
 def workflow():
     """
-        Get all or insert one workflow on database and queue
+        Get all or insert one workflow on database using prest
     """
     def _get():
         return requests.get(f'{BASE_URL}/workflow').content
 
     def _post():
-        requests.post(f'{BASE_URL}/workflow', json=request.data)
-        return request.data
+        if not request.is_json:
+            return abort(400, 'Body message is not a valid json')
+
+        body = request.get_json()
+        status = body['status'] if body['status'] in ['inserted', 'consumed'] else None
+
+        if not status:
+            return abort(403, 'status unsupported')
+
+        data = {
+            'UUID': str(uuid.uuid4()),
+            'status': body.status,
+            'data': body.data,
+            'steps': body.steps,
+        }
+        requests.post(f'{BASE_URL}/workflow', json=data)
+        return jsonify(data)
 
     _workflow = {
         'GET': _get,
