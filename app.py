@@ -46,7 +46,7 @@ def workflow():
         Get all or insert one workflow on database using prest
     """
     def _get():
-        return requests.get(f'{BASE_URL}/workflow').content
+        return jsonify(requests.get(f'{BASE_URL}/workflow').json())
 
     def _post():
         if not request.is_json:
@@ -59,13 +59,13 @@ def workflow():
             return abort(403, 'status unsupported')
 
         data = {
-            'UUID': str(uuid.uuid4()),
-            'status': body.status,
-            'data': body.data,
-            'steps': body.steps,
+            'uuid': str(uuid.uuid4()),
+            'status': body['status'],
+            'data': body['data'],
+            'steps': body['steps'],
         }
-        requests.post(f'{BASE_URL}/workflow', json=data)
-        return jsonify(data)
+        r = requests.post(f'{BASE_URL}/workflow/', json=data)
+        return jsonify(data), r.status_code
 
     _workflow = {
         'GET': _get,
