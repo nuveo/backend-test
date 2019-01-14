@@ -26,7 +26,7 @@ PREST_INFO = {
 BASE_URL = 'http://{host}:{port}/{db}/{schema}'.format(**PREST_INFO)
 
 app = Flask(__name__)
-swagger = Swagger(app)
+Swagger(app)
 
 
 @app.route('/')
@@ -81,7 +81,32 @@ def workflow_uuid(uuid=None):
     """
         Manage specific workflows based on UUID passed by parameter
     """
-    return 'Workflow returned with uuid:' + uuid
+    def _get():
+        r = requests.get(f'{BASE_URL}/workflow?uuid={uuid}')
+        return jsonify(r.json()), r.status_code
+    
+    def _patch():
+        if not request.is_json:
+            return abort(400, 'Body message is not a valid json')
+
+        body = request.get_json()
+        status = body['status'] if body['status'] in ['inserted', 'consumed'] else None
+
+        if not status:
+            return abort(403, 'status unsupported')
+
+        data = {
+            'status': body['status']
+        }
+
+        r = requests.patch(f'{BASE_URL}/workflow?uuid={uuid}', json=data)
+        return jsonify(data), r.status_code
+    
+    _workflow = {
+        'GET': _get,
+        'PATCH': _patch
+    }
+    return _workflow[request.method]()
 
 @app.route('/workflow/consume/', endpoint='workflow_consume', methods=['GET'])
 @swag_from('docs/workflow_consume_get.yml', endpoint='workflow_consume', methods=['GET'])
