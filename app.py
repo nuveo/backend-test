@@ -60,12 +60,13 @@ def workflow():
 
         data = {
             'uuid': str(uuid.uuid4()),
-            'status': body['status'],
-            'data': body['data'],
-            'steps': body['steps'],
+            'status': body.get('status'),
+            'data': body.get('data'),
+            'steps': body.get('steps'),
         }
-        r = requests.post(f'{BASE_URL}/workflow/', json=data)
-        return jsonify(data), r.status_code
+
+        resp = requests.post(f'{BASE_URL}/workflow/', json=data)
+        return jsonify(data), resp.status_code
 
     _workflow = {
         'GET': _get,
@@ -77,14 +78,14 @@ def workflow():
 @app.route('/workflow/<uuid>', methods=['GET', 'PATCH'], endpoint='workflow_uuid')
 @swag_from('docs/workflow_uuid_get.yml', endpoint='workflow_uuid', methods=['GET'])
 @swag_from('docs/workflow_uuid_patch.yml', endpoint='workflow_uuid', methods=['PATCH'])
-def workflow_uuid(uuid=None):
+def workflow_uuid(_uuid=None):
     """
         Manage specific workflows based on UUID passed by parameter
     """
     def _get():
-        r = requests.get(f'{BASE_URL}/workflow?uuid={uuid}')
-        return jsonify(r.json()), r.status_code
-    
+        resp = requests.get(f'{BASE_URL}/workflow?uuid={_uuid}')
+        return jsonify(resp.json()), resp.status_code
+
     def _patch():
         if not request.is_json:
             return abort(400, 'Body message is not a valid json')
@@ -96,12 +97,12 @@ def workflow_uuid(uuid=None):
             return abort(403, 'status unsupported')
 
         data = {
-            'status': body['status']
+            'status': body.get('status')
         }
 
-        r = requests.patch(f'{BASE_URL}/workflow?uuid={uuid}', json=data)
-        return jsonify(data), r.status_code
-    
+        resp = requests.patch(f'{BASE_URL}/workflow?uuid={_uuid}', json=data)
+        return jsonify(data), resp.status_code
+
     _workflow = {
         'GET': _get,
         'PATCH': _patch
