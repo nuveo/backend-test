@@ -16,6 +16,9 @@ setuptools = "*"
 flasgger = "*"
 flask-cors = "*"
 requests = "*"
+psycopg2 = "*"
+pika = "*"
+docker-compose = "*"
 
 [requires]
 python_version = "3.7"
