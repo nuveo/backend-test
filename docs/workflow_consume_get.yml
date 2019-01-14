@@ -1,0 +1,13 @@
+tags:
+  - "Workflow Consume"
+summary:
+  - "Process a workflow from queue"
+description:
+  - "Consume a workflow from queue and generate a CSV file with workflow.Data"
+produces:
+  - "text/csv"
+responses:
+  200:
+    description: "Workflow object"
+  400:
+    description: "Not found"
