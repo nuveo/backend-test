@@ -1,5 +1,5 @@
 tags:
-  - "workflow"
+  - "Workflow by uuid"
 summary: "Return a CSV file with the workflow.Data"
 description: "Consume a workflow from queue and generate a CSV file with workflow.Data"
 produces:
