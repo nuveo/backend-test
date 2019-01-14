@@ -1,0 +1,39 @@
+tags:
+  - "workflow"
+summary: "Return a CSV file with the workflow.Data"
+description: "Consume a workflow from queue and generate a CSV file with workflow.Data"
+produces:
+  - "text/csv"
+parameters:
+- name: "uuid"
+  in: "path"
+  description: "Unique workflow identifier"
+  required: true
+  type: "string"
+responses:
+  200:
+    description: "Workflow object"
+    schema:
+      type: "object"
+      items:
+        $ref: "#/definitions/Workflow"
+  400:
+    description: "Not found"
+definitions:
+  Workflow:
+    type: "object"
+    properties:
+      UUID:
+        type: "string"
+        format: "string"
+      data:
+        type: "object"
+        description: "Workflow data"
+      steps:
+        type: "string"
+      status:
+        type: "string"
+        description: "Workflow status"
+        enum:
+        - "inserted"
+        - "consumed"

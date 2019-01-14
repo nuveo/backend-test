@@ -1,0 +1,10 @@
+tags:
+  - "Workflow"
+parameters:
+  - in: "body"
+    name: "body"
+    description: "Workflow object that needs to send"
+    required: true
+responses:
+  200:
+    description: "Workflow object"

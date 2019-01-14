@@ -1,0 +1,8 @@
+The root route, return a simple Hello World message
+---
+name: "Index"
+tags:
+  - "Index"
+responses:
+  200:
+    description: A simple Hello World message

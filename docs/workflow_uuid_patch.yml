@@ -1,0 +1,23 @@
+tags:
+  - "workflow"
+summary: "Update status from specific workflow"
+description: ""
+consumes:
+  - "application/json"
+produces:
+  - "application/json"
+parameters:
+  - in: "body"
+    name: "body"
+    description: "Workflow object that needs to be updated"
+    required: true
+  - in: "path"
+    name: "UUID"
+    description: "UUID refeer to the workflow"
+responses:
+  400:
+    description: "Invalid UUID"
+  404:
+    description: "Workflow not found"
+  405:
+    description: "Validation exception"
