@@ -24,6 +24,8 @@ services:
       - 3100:3100
     links:
       - db
+    depends_on:
+      - "db"
     command: sh -c "/prest migrate up && /prest"
 
 volumes:
