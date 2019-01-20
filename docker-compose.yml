@@ -1,0 +1,31 @@
+version: '3'
+
+services:
+  db:
+    image: postgres:latest
+    expose:
+      - 7000
+    restart: always
+    ports:
+      - 7000:5432
+    environment:
+      POSTGRES_PASSWORD: 'postgres'
+    volumes:
+      - database_data:/var/lib/postgresql/data
+
+  prest:
+    image: prest/prest
+    volumes:
+      - ./specs/prest/prest.toml:/prest.toml
+      - ./migrations:/migrations
+    expose:
+      - 3100
+    ports:
+      - 3100:3100
+    links:
+      - db
+    command: sh -c "/prest migrate up && /prest"
+
+volumes:
+  database_data:
+    driver: local
