@@ -38,7 +38,8 @@ class TestWorkflowSimple(unittest.TestCase):
             "status": "inserted",
             "steps": ["step1", "step2", "step3"]
         }
-        response = self.client.post('/workflow', json=data)
+        response = self.client.post('/workflow/', json=data)
+        print(response.status)
         self.assertEqual(response.status_code, 201)
 
 
