@@ -118,5 +118,5 @@ def consume():
     """
         Consome a workflow from queue and return your .csv from Workflow.data
     """
-    requests.get(f'{BASE_URL}/cache_workflow/')
-    return 'Workflow consumed by queue'
+    resp = requests.get(f'{BASE_URL}/cache_workflow?_page=1&_page_size=1')
+    return jsonify(resp.json())
