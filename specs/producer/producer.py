@@ -39,13 +39,13 @@ conn.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
 curs = conn.cursor()
 curs.execute('LISTEN workflow_insert;')
 
-print('Esperando notificações no canal \'workflow_insert\'')
+# Waiting notifications for the channel workflow_insert
 while 1:
     if select.select([conn], [], [], 5) == ([], [], []):
-        print('Timeout')
+        # Timeout, no postgresql notifications received
+        pass
     else:
         conn.poll()
         while conn.notifies:
             notify = conn.notifies.pop(0)
             rabbit_notify(notify.payload)
-            print('Obteve NOTIFY:', notify.pid, notify.channel, notify.payload)
