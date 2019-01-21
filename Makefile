@@ -8,11 +8,8 @@ lint:
 run-containers:
 	docker-compose up -d --scale consumer=3
 
-run-webservice:
-	flask run
-
 run:
-	make run-containers && make run-webservice
+	make run-containers
 
 test:
 	python tests.py
