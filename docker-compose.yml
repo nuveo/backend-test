@@ -5,6 +5,7 @@ services:
     image: postgres:latest
     expose:
       - 7000
+      - 5432
     restart: always
     ports:
       - 7000:5432
@@ -27,6 +28,46 @@ services:
     depends_on:
       - "db"
     command: sh -c "/prest migrate up && /prest"
+
+  rbmq:
+    image: rabbitmq:3-management
+    expose:
+      - 4369
+      - 5671
+      - 15671
+      - 5672
+      - 25672
+      - 25676
+    ports:
+      - 8080:15672
+      - 5672:5672
+
+  producer:
+    image: python:3.7
+    expose:
+      - 5432
+    environment:
+      API_PREST_DB_NAME: postgres
+    links:
+      - db
+      - rbmq
+    depends_on:
+      - db
+      - rbmq
+    volumes:
+      - ./specs/producer:/producer
+    command: /bin/bash -c "pip install pika psycopg2-binary && python /producer/producer.py"
+
+  consumer:
+    image: python:3.7
+    expose:
+      - 5432
+    depends_on:
+      - db
+      - rbmq
+    volumes:
+      - ./specs/consumer:/consumer
+    command: /bin/bash -c "pip install pika psycopg2-binary && python /consumer/consumer.py"
 
 volumes:
   database_data:
