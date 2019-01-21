@@ -1,0 +1,25 @@
+version: '3'
+
+services:
+  consumer:
+    image: python:3.7
+    deploy:
+      replicas: 5
+      resources:
+        limits:
+          cpus: "0.1"
+          memory: 100M
+      restart_policy:
+        condition: on-failure
+    expose:
+      - 5432
+    depends_on:
+      - db
+      - rbmq
+    volumes:
+      - ./specs/consumer:/consumer
+    command: /bin/bash -c "pip install pika psycopg2-binary && python /consumer/consumer.py"
+    networks:
+      - webnet
+networks:
+  webnet:
