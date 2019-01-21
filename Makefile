@@ -12,4 +12,4 @@ run:
 	make run-containers
 
 test:
-	python tests.py
+	docker-compose exec web python /web/tests.py
