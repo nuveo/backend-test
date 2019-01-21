@@ -16,7 +16,3 @@ run:
 
 test:
 	python tests.py
-
-producer:
-	python producer.py
-
