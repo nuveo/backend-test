@@ -82,3 +82,5 @@ Lá, será possivel efetuar todas as requisições entre as rotas pertencentes a
 Algumas ressalvas:
 * O serializador json_to_csv criado para o desafio, não transforma `json objects` dentro de `json arrays` (quando o fiz suportar, obtive problemas em outros casos de dados). No mais o inverso é permitido, assim como objetos aninhados e multiplos filhos (extraídos via estratégia recursiva).
 * O /workflow/consume não pega uma queue para processar o csv em tempo real, pois preferi por engarregar esta tarefa aos workers, neste caso, a rota consulta ao pREST pelo ultimo registro salvo na tabela de cache `cache_workflow` e o retorna.
+
+Busquei nos limites de meu conhecimento, oferecer um trabalho satisfatório, um forte abraço!
