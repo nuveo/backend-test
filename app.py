@@ -6,7 +6,7 @@ import json
 import uuid
 import requests
 from flask import (
-    Flask, 
+    Flask,
     request,
     abort,
     jsonify
@@ -76,6 +76,7 @@ def workflow():
 
     return _workflow[request.method]()
 
+
 @app.route('/workflow/<_uuid>', methods=['GET', 'PATCH'], endpoint='workflow_uuid')
 @swag_from('docs/workflow_uuid_get.yml', endpoint='workflow_uuid', methods=['GET'])
 @swag_from('docs/workflow_uuid_patch.yml', endpoint='workflow_uuid', methods=['PATCH'])
@@ -109,6 +110,7 @@ def workflow_uuid(_uuid=None):
         'PATCH': _patch
     }
     return _workflow[request.method]()
+
 
 @app.route('/workflow/consume/', endpoint='workflow_consume', methods=['GET'])
 @swag_from('docs/workflow_consume_get.yml', endpoint='workflow_consume', methods=['GET'])
