@@ -4,24 +4,11 @@ url = "https://pypi.org/simple"
 verify_ssl = true
 
 [dev-packages]
+pycodestyle = "*"
 
 [packages]
-flask = "*"
-python-dotenv = "*"
-pylint = "*"
-pycodestyle = "*"
-pydocstyle = "*"
-sphinx = "*"
-setuptools = "*"
-flasgger = "*"
-flask-cors = "*"
-requests = "*"
-psycopg2 = "*"
-pika = "*"
 docker-compose = "*"
+pycodestyle = "*"
 
 [requires]
 python_version = "3.7"
-
-[scripts]
-start = "flask run"
