@@ -1,10 +1,12 @@
 import os
 from os.path import join, dirname
+import json
+
+import requests
 import pika
 from dotenv import load_dotenv
-import json
+
 import json_to_csv
-import requests
 
 load_dotenv(join(dirname(__file__), '.env'))
 

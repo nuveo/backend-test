@@ -1,9 +1,15 @@
 """
-    API para Workflow
+    API for Workflow management
+    For docs, visit: http://localhost:5000/apidocs
 """
 import os
 import json
 import uuid
+from os.path import (
+    join,
+    dirname
+)
+
 import requests
 from flask import (
     Flask,
@@ -15,6 +21,9 @@ from flasgger import (
     swag_from,
     Swagger
 )
+from dotenv import load_dotenv
+
+load_dotenv(join(dirname(__file__), '.env'))
 
 
 PREST_INFO = {

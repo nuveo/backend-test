@@ -3,8 +3,12 @@
     to the workflow_queue rabbitmq queue
 """
 import os
-from os.path import join, dirname
+from os.path import (
+    join,
+    dirname
+)
 import select
+
 import pika
 import psycopg2
 import psycopg2.extensions
