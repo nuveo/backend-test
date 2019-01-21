@@ -8,18 +8,21 @@ from app import app
 
 class TestWorkflowSimple(unittest.TestCase):
     client = app.test_client()
+
     def test_post_400(self):
         """
             Test if the body is a json valid
         """
-        self.assertEqual(self.client.post('/workflow/', data='wrong json').status_code, 400)
+        response = self.client.post('/workflow/', data='wrong json')
+        self.assertEqual(response.status_code, 400)
 
     def test_post_403(self):
         """
             Test if status passed in body are between inserted or consumed
         """
         data = {'status': 'inexistent status'}
-        self.assertEqual(self.client.post('/workflow/', json=data).status_code, 403)
+        response = self.client.post('/workflow/', json=data)
+        self.assertEqual(response.status_code, 403)
 
     def test_post_200(self):
         data = {
@@ -27,15 +30,16 @@ class TestWorkflowSimple(unittest.TestCase):
                 "field1": "value1",
                 "child1": {
                     "field1": "value1"
-                    }
-                },
+                    },
                 "child2": {
                     "field1": "value1"
+                    },
                 },
             "status": "inserted",
             "steps": ["step1", "step2", "step3"]
         }
-        self.assertEqual(self.client.post('/workflow/', json=data).status_code, 201)
+        response = self.client.post('/workflow/', json=data)
+        self.assertEqual(response.status_code, 201)
 
 
 if __name__ == '__main__':
