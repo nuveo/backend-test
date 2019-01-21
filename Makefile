@@ -2,7 +2,7 @@ prepare:
 	pipenv install
 
 lint:
-	pycodestyle
+	pycodestyle . --max-line-length=90
 	
 run:
 	flask run
