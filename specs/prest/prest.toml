@@ -1,0 +1,15 @@
+migrations = "./migrations"
+debug = true
+
+[http]
+port = 3100
+
+[jwt]
+default = false
+
+[pg]
+host = "db"
+user = "postgres"
+pass = "postgres"
+port = 5432
+database = "postgres"
