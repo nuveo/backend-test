@@ -35,7 +35,7 @@ services:
     links:
       - db
     depends_on:
-      - "db"
+      - db
     command: sh -c "/prest migrate up && /prest"
 
   rbmq:
