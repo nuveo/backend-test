@@ -17,7 +17,13 @@ PREST_INFO = {
     'port': os.getenv('PREST_PORT')
 }
 
-BASE_URL = 'http://{host}:{port}/{db}/{schema}'.format(**PREST_INFO)
+WEB_INFO = {
+    'host': os.getenv('WEB_HOST'),
+    'port': os.getenv('WEB_PORT')
+}
+
+WEB_URL = 'http://{host}:{port}'.format(**WEB_INFO)
+PREST_URL = 'http://{host}:{port}/{db}/{schema}'.format(**PREST_INFO)
 
 connection = pika.BlockingConnection(pika.ConnectionParameters(RABBITMQ_HOST))
 channel = connection.channel()
@@ -33,12 +39,10 @@ def callback(ch, method, properties, body):
         'data': json.dumps(data['data']),
         'csv': csv
     }
-    print(post_body)
-    requests.post(f'{BASE_URL}/cache_workflow', json=post_body)
 
+    requests.post(f'{PREST_URL}/cache_workflow', json=post_body)
+    requests.patch(f'{WEB_URL}/workflow/'+data['uuid'], json={"status": "consumed"})
 
 
 channel.basic_consume(callback, queue='workflow_queue', no_ack=True)
-# print(' [*] Waiting for messages. To exit press CTRL+C')
-
 channel.start_consuming()
