@@ -30,7 +30,6 @@ Fork this project in a private project and create a branch. When you want to our
 - PostgreSQL
 - A message queue that you choose, but describe why you choose.
 - [pREST](http://postgres.rest) to comunicate with database. It is a bonus.
-<<<<<<< HEAD
 
 ## Resolução
 
@@ -85,5 +84,3 @@ Algumas ressalvas:
 * O /workflow/consume não pega uma queue para processar o csv em tempo real, pois preferi por engarregar esta tarefa aos workers, neste caso, a rota consulta ao pREST pelo ultimo registro salvo na tabela de cache `cache_workflow` e o retorna.
 
 Busquei nos limites de meu conhecimento, oferecer um trabalho satisfatório, um forte abraço!
-=======
->>>>>>> 08d94a39136eb8b5c628a47624112de463adba7a
