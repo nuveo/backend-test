@@ -4,7 +4,7 @@ Develop the workflow's REST API following the specification bellow and document 
 
 ## Delivery instructions
 
-Clone this project and push a private repository in the (GitHub)[https://github.com/], [Gitlab](https://about.gitlab.com/) or [Bitbucket](https://bitbucket.org/). When you want to our review, write any information that you think important in the README.md and send an email to talentos@nuveo.ai. We'll follow your instructions to run your code and look the outcome. 
+Clone this project and push a private repository in the [GitHub](https://github.com/), [Gitlab](https://about.gitlab.com/) or [Bitbucket](https://bitbucket.org/). When you want to our review, write any information that you think important in the README.md and send an email to talentos@nuveo.ai. We'll follow your instructions to run your code and look the outcome. 
 
 ## Defining a workflow
 
