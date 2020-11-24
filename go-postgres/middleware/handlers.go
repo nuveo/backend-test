@@ -13,14 +13,11 @@ import (
 	"github.com/gorilla/mux" // used to get the params from the route
 
 	"github.com/joho/godotenv" // package used to read the .env file
-	_ "github.com/lib/pq"      // postgres golang driver
+	"github.com/lib/pq"        // postgres golang driver
+	uuid "github.com/satori/go.uuid"
 )
 
-// response format
-type response struct {
-	ID      string `json:"id,omitempty"`
-	Message string `json:"message,omitempty"`
-}
+var queue []models.Workflow
 
 // create connection with postgres db
 func createConnection() *sql.DB {
@@ -60,22 +57,29 @@ func CreateWorkflow(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 
 	// create an empty workflow of type models.Workflow
-	var workflow models.Workflow
+	var ds models.DataStatus
 
 	// decode the json request to workflow
-	err := json.NewDecoder(r.Body).Decode(&workflow)
+	err := json.NewDecoder(r.Body).Decode(&ds)
 
 	if err != nil {
-		log.Fatalf("Unable to decode the request body.  %v", err)
+		log.Fatalf("Unable to decode the request body.  %v\n", err)
 	}
 
+	fmt.Printf("Queue size: %v\n", len(queue))
+
 	// call insert workflow function and pass the workflow
-	insertID := insertWorkflow(workflow)
+	workflow := insertWorkflow(ds)
+	queue = enqueue(queue, workflow)
+
+	fmt.Printf("Queue size: %v\n", len(queue))
 
 	// format a response object
-	res := response{
-		ID:      insertID,
-		Message: "Workflow created successfully",
+	res := models.Workflow{
+		UUID:   workflow.UUID,
+		Status: workflow.Status,
+		Data:   workflow.Data,
+		Steps:  workflow.Steps,
 	}
 
 	// send the response
@@ -87,24 +91,46 @@ func GetWorkflow(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Context-Type", "application/x-www-form-urlencoded")
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	// get the workflowid from the request params, key is "id"
-	params := mux.Vars(r)
+
+	if len(queue) == 0 {
+		log.Fatalf("Empty queue.\n")
+	}
 
 	// convert the id type from string to int
-	id, err := params["id"]
+	id, err := uuid.FromString(queue[0].UUID)
 
 	if err != nil {
-		log.Fatalf("Unable to convert the string into int.  %v", err)
+		log.Fatalf("Unable to convert the string into UUID.  %v\n", err)
 	}
 
 	// call the getWorkflow function with workflow id to retrieve a single workflow
-	workflow, err := getWorkflow(string(id))
+	workflow, err := getWorkflow(fmt.Sprint(id))
 
 	if err != nil {
-		log.Fatalf("Unable to get workflow. %v", err)
+		log.Fatalf("Unable to get workflow. %v\n", err)
+	}
+
+	fmt.Printf("Queue size: %v\n", len(queue))
+
+	if len(queue) == 0 {
+		log.Fatalf("Empty queue.\n")
+	} else {
+		queue = dequeue(queue)
+		updateWorkflow(fmt.Sprint(id), models.WorkflowStatus(models.CONSUMED))
+	}
+
+	fmt.Printf("Queue size: %v\n", len(queue))
+
+	// format a response object
+	res := models.Workflow{
+		UUID:   workflow.UUID,
+		Status: workflow.Status,
+		Data:   workflow.Data,
+		Steps:  workflow.Steps,
 	}
 
 	// send the response
-	json.NewEncoder(w).Encode(workflow)
+	json.NewEncoder(w).Encode(res)
 }
 
 // GetAllWorkflow will return all the workflows
@@ -115,8 +141,10 @@ func GetAllWorkflow(w http.ResponseWriter, r *http.Request) {
 	workflows, err := getAllWorkflows()
 
 	if err != nil {
-		log.Fatalf("Unable to get all workflow. %v", err)
+		log.Fatalf("Unable to get all workflow. %v\n", err)
 	}
+
+	fmt.Printf("Queue size: %v\n", len(queue))
 
 	// send all the workflows as response
 	json.NewEncoder(w).Encode(workflows)
@@ -134,12 +162,13 @@ func UpdateWorkflow(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 
 	// convert the id type from string to int
-	id, err := params["id"]
+	id, err := uuid.FromString(params["UUID"])
 
 	if err != nil {
-		log.Fatalf("Unable to convert the string into int.  %v", err)
+		log.Fatalf("Unable to convert the string into UUID.  %v\n", err)
 	}
 
+	/**
 	// create an empty workflow of type models.Workflow
 	var workflow models.WorkflowStatus
 
@@ -147,18 +176,36 @@ func UpdateWorkflow(w http.ResponseWriter, r *http.Request) {
 	err = json.NewDecoder(r.Body).Decode(&workflow)
 
 	if err != nil {
-		log.Fatalf("Unable to decode the request body.  %v", err)
+		fmt.Printf("Unable to decode the request body.  %v", err)
+	}
+	**/
+
+	// call the getWorkflow function with workflow id to retrieve a single workflow
+	workflow, err := getWorkflow(fmt.Sprint(id))
+
+	if err != nil {
+		log.Fatalf("Unable to get workflow. %v\n", err)
 	}
 
+	fmt.Printf("Queue size: %v\n", len(queue))
+
 	// call update workflow to update the workflow
-	updatedRows := updateWorkflow(string(id), workflow)
+	updatedRows := updateWorkflow(fmt.Sprint(id), models.WorkflowStatus(models.INSERTED))
+
+	if updatedRows > 0 {
+		queue = enqueue(queue, workflow)
+	} else {
+		log.Fatalf("No workflow updated.\n")
+	}
+
+	fmt.Printf("Queue size: %v\n", len(queue))
 
 	// format the message string
-	msg := fmt.Sprintf("Workflow updated successfully. Total rows/record affected %v", updatedRows)
+	msg := fmt.Sprintf("Workflow updated successfully, readding to the queue. Total rows/record affected %v\n", updatedRows)
 
 	// format the response message
-	res := response{
-		ID:      string(id),
+	res := models.Response{
+		ID:      fmt.Sprint(id),
 		Message: msg,
 	}
 
@@ -178,21 +225,21 @@ func DeleteWorkflow(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 
 	// convert the id in string to int
-	id, err := params["id"]
+	id, err := uuid.FromString(params["UUID"])
 
 	if err != nil {
-		log.Fatalf("Unable to convert the string into int.  %v", err)
+		log.Fatalf("Unable to convert the string into UUID.  %v", err)
 	}
 
 	// call the deleteWorkflow, convert the int to int64
-	deletedRows := deleteWorkflow(string(id))
+	deletedRows := deleteWorkflow(fmt.Sprint(id))
 
 	// format the message string
-	msg := fmt.Sprintf("Workflow updated successfully. Total rows/record affected %v", deletedRows)
+	msg := fmt.Sprintf("Workflow deleted successfully. Total rows/record affected %v\n", deletedRows)
 
 	// format the reponse message
-	res := response{
-		ID:      string(id),
+	res := models.Response{
+		ID:      fmt.Sprint(id),
 		Message: msg,
 	}
 
@@ -202,7 +249,7 @@ func DeleteWorkflow(w http.ResponseWriter, r *http.Request) {
 
 //------------------------- handler functions ----------------
 // insert one workflow in the DB
-func insertWorkflow(workflow models.Workflow) string {
+func insertWorkflow(ds models.DataStatus) models.Workflow {
 
 	// create the postgres db connection
 	db := createConnection()
@@ -212,23 +259,23 @@ func insertWorkflow(workflow models.Workflow) string {
 
 	// create the insert sql query
 	// returning workflowid will return the id of the inserted workflow
-	sqlStatement := `INSERT INTO workflows (Data, Steps) VALUES ($1, $2) RETURNING UUID`
+	sqlStatement := `INSERT INTO workflows (Data, Steps) VALUES ($1, $2) RETURNING UUID, status, data, steps`
 
 	// the inserted id will store in this id
-	var id string
+	var workflow models.Workflow
 
 	// execute the sql statement
 	// Scan function will save the insert id in the id
-	err := db.QueryRow(sqlStatement, workflow.Data, workflow.Steps).Scan(&id)
+	err := db.QueryRow(sqlStatement, ds.Data, pq.Array(ds.Steps)).Scan(&workflow.UUID, &workflow.Status, &workflow.Data, pq.Array(&workflow.Steps))
 
 	if err != nil {
-		log.Fatalf("Unable to execute the query. %v", err)
+		log.Fatalf("Unable to execute the query. %v\n", err)
 	}
 
-	fmt.Printf("Inserted a single record %v", id)
+	fmt.Printf("Inserted a single record %v\n", workflow)
 
 	// return the inserted id
-	return id
+	return workflow
 }
 
 // get one workflow from the DB by its workflowid
@@ -249,16 +296,18 @@ func getWorkflow(id string) (models.Workflow, error) {
 	row := db.QueryRow(sqlStatement, id)
 
 	// unmarshal the row object to workflow
-	err := row.Scan(&workflow.UUID, &workflow.Status, &workflow.Data, &workflow.Steps)
+	err := row.Scan(&workflow.UUID, &workflow.Status, &workflow.Data, pq.Array(&workflow.Steps))
 
 	switch err {
 	case sql.ErrNoRows:
 		fmt.Println("No rows were returned!")
 		return workflow, nil
+
 	case nil:
 		return workflow, nil
+
 	default:
-		log.Fatalf("Unable to scan the row. %v", err)
+		log.Fatalf("Unable to scan the row. %v\n", err)
 	}
 
 	// return empty workflow on error
@@ -282,7 +331,7 @@ func getAllWorkflows() ([]models.Workflow, error) {
 	rows, err := db.Query(sqlStatement)
 
 	if err != nil {
-		log.Fatalf("Unable to execute the query. %v", err)
+		log.Fatalf("Unable to execute the query. %v\n", err)
 	}
 
 	// close the statement
@@ -293,15 +342,14 @@ func getAllWorkflows() ([]models.Workflow, error) {
 		var workflow models.Workflow
 
 		// unmarshal the row object to workflow
-		err = rows.Scan(&workflow.UUID, &workflow.Status, &workflow.Data, &workflow.Steps)
+		err = rows.Scan(&workflow.UUID, &workflow.Status, &workflow.Data, pq.Array(&workflow.Steps))
 
 		if err != nil {
-			log.Fatalf("Unable to scan the row. %v", err)
+			log.Fatalf("Unable to scan the row. %v\n", err)
 		}
 
 		// append the workflow in the workflows slice
 		workflows = append(workflows, workflow)
-
 	}
 
 	// return empty workflow on error
@@ -324,17 +372,17 @@ func updateWorkflow(id string, status models.WorkflowStatus) int64 {
 	res, err := db.Exec(sqlStatement, id, status)
 
 	if err != nil {
-		log.Fatalf("Unable to execute the query. %v", err)
+		log.Fatalf("Unable to execute the query. %v\n", err)
 	}
 
 	// check how many rows affected
 	rowsAffected, err := res.RowsAffected()
 
 	if err != nil {
-		log.Fatalf("Error while checking the affected rows. %v", err)
+		log.Fatalf("Error while checking the affected rows. %v\n", err)
 	}
 
-	fmt.Printf("Total rows/record affected %v", rowsAffected)
+	fmt.Printf("Total rows/record affected %v\n", rowsAffected)
 
 	return rowsAffected
 }
@@ -355,17 +403,29 @@ func deleteWorkflow(id string) int64 {
 	res, err := db.Exec(sqlStatement, id)
 
 	if err != nil {
-		log.Fatalf("Unable to execute the query. %v", err)
+		log.Fatalf("Unable to execute the query. %v\n", err)
 	}
 
 	// check how many rows affected
 	rowsAffected, err := res.RowsAffected()
 
 	if err != nil {
-		log.Fatalf("Error while checking the affected rows. %v", err)
+		log.Fatalf("Error while checking the affected rows. %v\n", err)
 	}
 
-	fmt.Printf("Total rows/record affected %v", rowsAffected)
+	fmt.Printf("Total rows/record affected %v\n", rowsAffected)
 
 	return rowsAffected
+}
+
+func enqueue(queue []models.Workflow, w models.Workflow) []models.Workflow {
+	queue = append(queue, w) // Simply append to enqueue.
+	fmt.Printf("Enqueued: UUID: %v, Queue size %v\n", w.UUID, len(queue))
+	return queue
+}
+
+func dequeue(queue []models.Workflow) []models.Workflow {
+	w := queue[0] // The first element is the one to be dequeued.
+	fmt.Printf("Dequeued: UUID: %v, Queue size %v\n", w.UUID, len(queue))
+	return queue[1:] // Slice off the element once it is dequeued.
 }

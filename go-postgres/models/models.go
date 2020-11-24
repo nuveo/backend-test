@@ -16,7 +16,12 @@ type Workflow struct {
 	Steps  []string        `json:"steps"`
 }
 
-type WorkflowData struct {
-	Name        string
-	Description string
+type Response struct {
+	ID      string `json:"id,omitempty"`
+	Message string `json:"message,omitempty"`
+}
+
+type DataStatus struct {
+	Data  json.RawMessage `json:"data"`
+	Steps []string        `json:"steps"`
 }
