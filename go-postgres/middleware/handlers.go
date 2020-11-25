@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"database/sql"
+	"encoding/csv"
 	"encoding/json" // package to encode and decode the json into struct and vice versa
 	"fmt"
 	"go-postgres/models" // models package where Workflow schema is defined
@@ -9,15 +10,12 @@ import (
 	"net/http" // used to access the request and response object of the api
 	"os"       // used to read the environment variable
 
-	// package used to covert string into int type
-	"github.com/gorilla/mux" // used to get the params from the route
-
+	"github.com/gorilla/mux"   // used to get the params from the route
 	"github.com/joho/godotenv" // package used to read the .env file
 	"github.com/lib/pq"        // postgres golang driver
-	uuid "github.com/satori/go.uuid"
 )
 
-var queue []models.Workflow
+var queue []string
 
 // create connection with postgres db
 func createConnection() *sql.DB {
@@ -70,7 +68,9 @@ func CreateWorkflow(w http.ResponseWriter, r *http.Request) {
 
 	// call insert workflow function and pass the workflow
 	workflow := insertWorkflow(ds)
-	queue = enqueue(queue, workflow)
+
+	// put UUID of the workflow in the end of the queue
+	queue = enqueue(queue, workflow.UUID)
 
 	fmt.Printf("Queue size: %v\n", len(queue))
 
@@ -90,21 +90,16 @@ func CreateWorkflow(w http.ResponseWriter, r *http.Request) {
 func GetWorkflow(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Context-Type", "application/x-www-form-urlencoded")
 	w.Header().Set("Access-Control-Allow-Origin", "*")
-	// get the workflowid from the request params, key is "id"
 
 	if len(queue) == 0 {
 		log.Fatalf("Empty queue.\n")
 	}
 
-	// convert the id type from string to int
-	id, err := uuid.FromString(queue[0].UUID)
-
-	if err != nil {
-		log.Fatalf("Unable to convert the string into UUID.  %v\n", err)
-	}
+	// get the id from the head of the queue
+	uuid := queue[0]
 
 	// call the getWorkflow function with workflow id to retrieve a single workflow
-	workflow, err := getWorkflow(fmt.Sprint(id))
+	workflow, err := getWorkflow(uuid)
 
 	if err != nil {
 		log.Fatalf("Unable to get workflow. %v\n", err)
@@ -115,28 +110,51 @@ func GetWorkflow(w http.ResponseWriter, r *http.Request) {
 	if len(queue) == 0 {
 		log.Fatalf("Empty queue.\n")
 	} else {
+		// consume workflow id from the head of the queue
 		queue = dequeue(queue)
-		updateWorkflow(fmt.Sprint(id), models.WorkflowStatus(models.CONSUMED))
+
+		//update workflow status to CONSUMED
+		updateWorkflow(uuid, models.WorkflowStatus(models.CONSUMED))
 	}
 
 	fmt.Printf("Queue size: %v\n", len(queue))
 
-	// format a response object
-	res := models.Workflow{
-		UUID:   workflow.UUID,
-		Status: workflow.Status,
-		Data:   workflow.Data,
-		Steps:  workflow.Steps,
+	// format a json data to be converted into csv
+	data := models.DataJSON{}
+	err = json.Unmarshal([]byte(workflow.Data), &data)
+
+	if err != nil {
+		log.Fatalf("Unable to convert json file. %v\n", err)
 	}
 
-	// send the response
-	json.NewEncoder(w).Encode(res)
+	// create csv file with the id nas the name
+	file, err := os.Create("./output/" + uuid + ".csv")
+
+	if err != nil {
+		log.Fatalf("Unable to create csv file. %v\n", err)
+	}
+
+	defer file.Close()
+
+	writer := csv.NewWriter(file)
+
+	// write data of json into row
+	var row []string
+	row = append(row, data.Name)
+	row = append(row, data.Description)
+
+	// write lines at the csv
+	writer.Write([]string{"name", "description"})
+	writer.Write(row)
+
+	defer writer.Flush()
 }
 
 // GetAllWorkflow will return all the workflows
 func GetAllWorkflow(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Context-Type", "application/x-www-form-urlencoded")
 	w.Header().Set("Access-Control-Allow-Origin", "*")
+
 	// get all the workflows in the db
 	workflows, err := getAllWorkflows()
 
@@ -161,41 +179,19 @@ func UpdateWorkflow(w http.ResponseWriter, r *http.Request) {
 	// get the workflowid from the request params, key is "id"
 	params := mux.Vars(r)
 
-	// convert the id type from string to int
-	id, err := uuid.FromString(params["UUID"])
-
-	if err != nil {
-		log.Fatalf("Unable to convert the string into UUID.  %v\n", err)
-	}
-
-	/**
-	// create an empty workflow of type models.Workflow
-	var workflow models.WorkflowStatus
-
-	// decode the json request to workflow
-	err = json.NewDecoder(r.Body).Decode(&workflow)
-
-	if err != nil {
-		fmt.Printf("Unable to decode the request body.  %v", err)
-	}
-	**/
-
-	// call the getWorkflow function with workflow id to retrieve a single workflow
-	workflow, err := getWorkflow(fmt.Sprint(id))
-
-	if err != nil {
-		log.Fatalf("Unable to get workflow. %v\n", err)
-	}
+	// get the id from the workflow to update
+	uuid := params["UUID"]
 
 	fmt.Printf("Queue size: %v\n", len(queue))
 
-	// call update workflow to update the workflow
-	updatedRows := updateWorkflow(fmt.Sprint(id), models.WorkflowStatus(models.INSERTED))
+	// update the workflow as INSERTED again and return the number os rows affected with the operation
+	updatedRows := updateWorkflow(uuid, models.WorkflowStatus(models.INSERTED))
 
 	if updatedRows > 0 {
-		queue = enqueue(queue, workflow)
+		// since the workflow is inserted again we add the uuid to the end of the queue
+		queue = enqueue(queue, fmt.Sprint(uuid))
 	} else {
-		log.Fatalf("No workflow updated.\n")
+		log.Fatalf("UUID not found.\n")
 	}
 
 	fmt.Printf("Queue size: %v\n", len(queue))
@@ -205,7 +201,7 @@ func UpdateWorkflow(w http.ResponseWriter, r *http.Request) {
 
 	// format the response message
 	res := models.Response{
-		ID:      fmt.Sprint(id),
+		ID:      uuid,
 		Message: msg,
 	}
 
@@ -225,21 +221,21 @@ func DeleteWorkflow(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 
 	// convert the id in string to int
-	id, err := uuid.FromString(params["UUID"])
+	uuid := params["UUID"]
 
-	if err != nil {
-		log.Fatalf("Unable to convert the string into UUID.  %v", err)
+	// delete workflow and return the number os rows affected with the operation
+	deletedRows := deleteWorkflow(uuid)
+
+	if deletedRows == 0 {
+		log.Fatalf("UUID not found.\n")
 	}
-
-	// call the deleteWorkflow, convert the int to int64
-	deletedRows := deleteWorkflow(fmt.Sprint(id))
 
 	// format the message string
 	msg := fmt.Sprintf("Workflow deleted successfully. Total rows/record affected %v\n", deletedRows)
 
 	// format the reponse message
 	res := models.Response{
-		ID:      fmt.Sprint(id),
+		ID:      uuid,
 		Message: msg,
 	}
 
@@ -418,14 +414,16 @@ func deleteWorkflow(id string) int64 {
 	return rowsAffected
 }
 
-func enqueue(queue []models.Workflow, w models.Workflow) []models.Workflow {
-	queue = append(queue, w) // Simply append to enqueue.
-	fmt.Printf("Enqueued: UUID: %v, Queue size %v\n", w.UUID, len(queue))
+// put a UUID int the end of the queue
+func enqueue(queue []string, uuid string) []string {
+	queue = append(queue, uuid) // Simply append to enqueue.
+	fmt.Printf("Enqueued: UUID: %v, Queue size %v\n", uuid, len(queue))
 	return queue
 }
 
-func dequeue(queue []models.Workflow) []models.Workflow {
-	w := queue[0] // The first element is the one to be dequeued.
-	fmt.Printf("Dequeued: UUID: %v, Queue size %v\n", w.UUID, len(queue))
+// remove the UUID of the head of the queue
+func dequeue(queue []string) []string {
+	uuid := queue[0] // The first element is the one to be dequeued.
+	fmt.Printf("Dequeued: UUID: %v, Queue size %v\n", uuid, len(queue))
 	return queue[1:] // Slice off the element once it is dequeued.
 }

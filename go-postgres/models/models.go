@@ -25,3 +25,8 @@ type DataStatus struct {
 	Data  json.RawMessage `json:"data"`
 	Steps []string        `json:"steps"`
 }
+
+type DataJSON struct {
+	Name        string `json:"name"`
+	Description string `json:"description"`
+}
