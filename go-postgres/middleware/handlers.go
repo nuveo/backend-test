@@ -6,6 +6,7 @@ import (
 	"encoding/json" // package to encode and decode the json into struct and vice versa
 	"fmt"
 	"go-postgres/models" // models package where Workflow schema is defined
+	"go-postgres/queue"
 	"log"
 	"net/http" // used to access the request and response object of the api
 	"os"       // used to read the environment variable
@@ -15,7 +16,7 @@ import (
 	"github.com/lib/pq"        // postgres golang driver
 )
 
-var queue []string
+var fila queue.IdQueue
 
 // create connection with postgres db
 func createConnection() *sql.DB {
@@ -64,15 +65,15 @@ func CreateWorkflow(w http.ResponseWriter, r *http.Request) {
 		log.Fatalf("Unable to decode the request body.  %v\n", err)
 	}
 
-	fmt.Printf("Queue size: %v\n", len(queue))
+	fmt.Printf("Queue size: %v\n", fila.Size())
 
 	// call insert workflow function and pass the workflow
 	workflow := insertWorkflow(ds)
 
 	// put UUID of the workflow in the end of the queue
-	queue = enqueue(queue, workflow.UUID)
+	fila.Enqueue(workflow.UUID)
 
-	fmt.Printf("Queue size: %v\n", len(queue))
+	fmt.Printf("Queue size: %v\n", fila.Size())
 
 	// format a response object
 	res := models.Workflow{
@@ -91,12 +92,12 @@ func GetWorkflow(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Context-Type", "application/x-www-form-urlencoded")
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 
-	if len(queue) == 0 {
+	if fila.IsEmpty() {
 		log.Fatalf("Empty queue.\n")
 	}
 
 	// get the id from the head of the queue
-	uuid := queue[0]
+	uuid := fila.First()
 
 	// call the getWorkflow function with workflow id to retrieve a single workflow
 	workflow, err := getWorkflow(uuid)
@@ -105,19 +106,19 @@ func GetWorkflow(w http.ResponseWriter, r *http.Request) {
 		log.Fatalf("Unable to get workflow. %v\n", err)
 	}
 
-	fmt.Printf("Queue size: %v\n", len(queue))
+	fmt.Printf("Queue size: %v\n", fila.Size())
 
-	if len(queue) == 0 {
+	if fila.IsEmpty() {
 		log.Fatalf("Empty queue.\n")
 	} else {
 		// consume workflow id from the head of the queue
-		queue = dequeue(queue)
+		fila.Dequeue()
 
 		//update workflow status to CONSUMED
 		updateWorkflow(uuid, models.WorkflowStatus(models.CONSUMED))
 	}
 
-	fmt.Printf("Queue size: %v\n", len(queue))
+	fmt.Printf("Queue size: %v\n", fila.Size())
 
 	// format a json data to be converted into csv
 	data := models.DataJSON{}
@@ -162,7 +163,7 @@ func GetAllWorkflow(w http.ResponseWriter, r *http.Request) {
 		log.Fatalf("Unable to get all workflow. %v\n", err)
 	}
 
-	fmt.Printf("Queue size: %v\n", len(queue))
+	fmt.Printf("Queue size: %v\n", fila.Size())
 
 	// send all the workflows as response
 	json.NewEncoder(w).Encode(workflows)
@@ -182,19 +183,19 @@ func UpdateWorkflow(w http.ResponseWriter, r *http.Request) {
 	// get the id from the workflow to update
 	uuid := params["UUID"]
 
-	fmt.Printf("Queue size: %v\n", len(queue))
+	fmt.Printf("Queue size: %v\n", fila.Size())
 
 	// update the workflow as INSERTED again and return the number os rows affected with the operation
 	updatedRows := updateWorkflow(uuid, models.WorkflowStatus(models.INSERTED))
 
 	if updatedRows > 0 {
 		// since the workflow is inserted again we add the uuid to the end of the queue
-		queue = enqueue(queue, fmt.Sprint(uuid))
+		fila.Enqueue(uuid)
 	} else {
 		log.Fatalf("UUID not found.\n")
 	}
 
-	fmt.Printf("Queue size: %v\n", len(queue))
+	fmt.Printf("Queue size: %v\n", fila.Size())
 
 	// format the message string
 	msg := fmt.Sprintf("Workflow updated successfully, readding to the queue. Total rows/record affected %v\n", updatedRows)
@@ -412,18 +413,4 @@ func deleteWorkflow(id string) int64 {
 	fmt.Printf("Total rows/record affected %v\n", rowsAffected)
 
 	return rowsAffected
-}
-
-// put a UUID int the end of the queue
-func enqueue(queue []string, uuid string) []string {
-	queue = append(queue, uuid) // Simply append to enqueue.
-	fmt.Printf("Enqueued: UUID: %v, Queue size %v\n", uuid, len(queue))
-	return queue
-}
-
-// remove the UUID of the head of the queue
-func dequeue(queue []string) []string {
-	uuid := queue[0] // The first element is the one to be dequeued.
-	fmt.Printf("Dequeued: UUID: %v, Queue size %v\n", uuid, len(queue))
-	return queue[1:] // Slice off the element once it is dequeued.
 }
