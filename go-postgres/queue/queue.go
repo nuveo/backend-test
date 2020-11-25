@@ -10,7 +10,7 @@ type IdQueue struct {
 	lock  sync.RWMutex
 }
 
-func (q *IdQueue) New() *IdQueue {
+func (q *IdQueue) initialize() *IdQueue {
 	q.items = []string{}
 	return q
 }
@@ -43,10 +43,10 @@ func (q *IdQueue) Size() int {
 }
 
 // return first element of the head of the queue
-func (q *IdQueue) First() string {
+func (q *IdQueue) First() *string {
 	q.lock.RLock()
 	uuid := q.items[0]
 	q.lock.RUnlock()
 
-	return uuid
+	return &uuid
 }

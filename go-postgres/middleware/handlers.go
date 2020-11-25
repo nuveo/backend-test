@@ -100,7 +100,7 @@ func GetWorkflow(w http.ResponseWriter, r *http.Request) {
 	uuid := fila.First()
 
 	// call the getWorkflow function with workflow id to retrieve a single workflow
-	workflow, err := getWorkflow(uuid)
+	workflow, err := getWorkflow(*uuid)
 
 	if err != nil {
 		log.Fatalf("Unable to get workflow. %v\n", err)
@@ -115,7 +115,7 @@ func GetWorkflow(w http.ResponseWriter, r *http.Request) {
 		fila.Dequeue()
 
 		//update workflow status to CONSUMED
-		updateWorkflow(uuid, models.WorkflowStatus(models.CONSUMED))
+		updateWorkflow(*uuid, models.WorkflowStatus(models.CONSUMED))
 	}
 
 	fmt.Printf("Queue size: %v\n", fila.Size())
@@ -129,7 +129,7 @@ func GetWorkflow(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// create csv file with the id nas the name
-	file, err := os.Create("./output/" + uuid + ".csv")
+	file, err := os.Create("./output/" + *uuid + ".csv")
 
 	if err != nil {
 		log.Fatalf("Unable to create csv file. %v\n", err)
