@@ -30,7 +30,7 @@ Clone this project and push a private repository in the [GitHub](https://github.
 - PostgreSQL
 - A message queue that you choose, but describe why you choose.
 
-## Solucação - Lucas Fernandes de Oliveira
+## Solução - Lucas Fernandes de Oliveira
 
 Primeiro criei uma instância do Postgres no [API Elephant SQL](https://api.elephantsql.com/) e criei o Enum de Status e tabela de Workflows.
 
