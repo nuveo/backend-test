@@ -32,7 +32,7 @@ Clone this project and push a private repository in the [GitHub](https://github.
 
 ## Solução - Lucas Fernandes de Oliveira
 
-Primeiro criei uma instância do Postgres no [API Elephant SQL](https://api.elephantsql.com/) e criei o Enum de Status e tabela de Workflows.
+Primeiro criei uma instância do Postgres no [API Elephant SQL](https://www.elephantsql.com/) e criei o Enum de Status e tabela de Workflows.
 
 ```sql
     CREATE TYPE Status AS ENUM ('inserted', 'consumed');
@@ -69,7 +69,7 @@ Na seção Body > raw > JSON, você cola o JSON com os dados que se deseja inser
 [{
 "data": {"name": "Shutdown",
 		 "description": "Shutdown the computer"},
-"steps": ["Press Alt + F4","Select turn off cmputer","Press ok"]
+"steps": ["Press Alt + F4","Select turn off computer","Press ok"]
 }]
 ```
 
@@ -88,7 +88,7 @@ Dentro do BD, é gerado automaticamente um **UUID**, por default o **Status** pa
 "UUID":"e322595b-69ba-4b03-bd2d-3fa588b72c2e",
 "status":"inserted",
 "data":{"name":"Shutdown","description":"Shutdown the computer"},
-"steps":["Press Alt + F4","Select turn off cmputer","Press ok"]
+"steps":["Press Alt + F4","Select turn off computer","Press ok"]
 }]
 ```
 
@@ -109,7 +109,7 @@ Dentro do BD, é o método pega todos os workflows e retorna um JSON os dados de
 "UUID":"e322595b-69ba-4b03-bd2d-3fa588b72c2e",
 "status":"inserted",
 "data":{"name":"Shutdown","description":"Shutdown the computer"},
-"steps":["Press Alt + F4","Select turn off cmputer","Press ok"]
+"steps":["Press Alt + F4","Select turn off computer","Press ok"]
 },{
 "UUID":"8b7301ee-a40e-4e5f-9437-d1d629deb987",
 "status":"inserted",
