@@ -3,9 +3,9 @@ services:
   db: 
     image: postgres
     environment: 
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: dev
-      POSTGRES_DB: nuveo
+      POSTGRES_USER: ${COMPOSE_POSTGRES_USER}
+      POSTGRES_PASSWORD: ${COMPOSE_POSTGRES_PASSWORD}
+      POSTGRES_DB: ${COMPOSE_POSTGRES_DB}
     restart: always
     ports: 
       - 5432:5432
