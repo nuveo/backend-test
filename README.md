@@ -56,6 +56,12 @@ Ao consumir um workflow é gerado um arquivo .csv na pasta spreadsheet, veja:
 ![CONSUME2](https://i.ibb.co/5MCdDC5/consumeeee.png)
 
 
+### Autocrítica do meu código
+Algumas escolhas que eu teria feito caso fizesse o teste do zero novamente:
+- Usar clean architecture pois o código atual possui uma alta dependência de bibliotecas externas. 
+- Quebrar o código em mais funções pequenas que façam apenas uma determinada tarefa, como não tenho muita experiência em Go acabei ficando preso em outros problemas e não pude realizar isto.  
+
+
 ### Agradecimentos
 Primeiramente gostaria de agradecer por poder participar do teste para a vaga de back-end e dizer que aprendi demais ao realizar esse teste, através dele pude compreender os problemas que a empresa busca resolver. Só tinha feito coisas básicas em Go (minha proficiência é em Java e Javascript) e gostei demais da linguagem, tanto é que continuarei estudando e amei descobrir que pessoas da empresa e que já passaram por ela fazem parte de um imenso grupo de estudos de go (go-br).  Creio que a nuveo está de parabéns, pois o seu RH é maravilhoso e o teste é um ótimo desafio para quem quer ter noção do que lhe espera.  
 
