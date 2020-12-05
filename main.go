@@ -8,7 +8,9 @@ import (
 	"net/http"
 )
 
-var queue helpers.ElementQueue
+var (
+	queue helpers.ElementQueue
+)
 
 func main() {
 
