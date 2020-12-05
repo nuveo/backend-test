@@ -38,7 +38,7 @@ func (e *ElementQueue) Enqueue(item string) {
 	e.lock.Lock()
 
 	e.elements = append(e.elements, item)
-	fmt.Printf("Enqueued: %v", item)
+	fmt.Println("\nEnqueued")
 
 	e.lock.Unlock()
 
@@ -48,8 +48,8 @@ func (e *ElementQueue) Enqueue(item string) {
 func (e *ElementQueue) Dequeue() string {
 	e.lock.Lock()
 	item := e.elements[0]
-
-	e.elements = e.elements[1:len(e.elements)]
+	fmt.Println("\nDequeued")
+	e.elements = e.elements[1:]
 	e.lock.Unlock()
 
 	return item
