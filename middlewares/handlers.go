@@ -4,11 +4,13 @@ import (
 	"backend-test/helpers"
 	"backend-test/models"
 	"database/sql"
+	"encoding/csv"
 	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strconv"
 
 	"github.com/gorilla/mux"
@@ -22,8 +24,11 @@ type response struct {
 	Message string `json:"message,omitempty"`
 }
 
-var queue helpers.ElementQueue
+var (
+	queue helpers.ElementQueue
+)
 
+// Create connection with postgres
 func createConnection() *sql.DB {
 	err := godotenv.Load(".env")
 
@@ -45,6 +50,8 @@ func createConnection() *sql.DB {
 	}
 
 	fmt.Println("\nSuccessfully connected!")
+
+	queue.Create()
 
 	return db
 }
@@ -88,25 +95,27 @@ func GetAllWorkflow(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(workflows)
 }
 
-// GetWorkflow get a workflow from your uuid
-func GetWorkflow(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Context-Type", "application/x-www-form-urlencoded")
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	params := mux.Vars(r)
+// ConsumeWorkflow get a workflow from your uuid
+func ConsumeWorkflow(w http.ResponseWriter, r *http.Request) {
 
-	id, err := strconv.Atoi(params["uuid"])
-
-	if err != nil {
-		log.Fatalf("Unable to convert the string into int. %v", err)
+	if queue.IsEmpty() {
+		log.Fatal("Unable dequeue")
 	}
 
-	workflow, err := getWorkflow(string(id))
+	uuid := queue.Dequeue()
+
+	workflow, err := getWorkflow(uuid)
 
 	if err != nil {
-		log.Fatalf("Unable to get workflow by uuid. %v", err)
+		log.Fatalf("Unable to get workflow. %v", err)
 	}
+
+	updateWorkflow(uuid, workflow)
+
+	generateCsv(workflow)
 
 	json.NewEncoder(w).Encode(workflow)
+
 }
 
 // UpdateWorkflow update a workflow from your uuid
@@ -164,6 +173,7 @@ func DeleteWorkflow(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(res)
 }
 
+// Insert a workflow in database
 func insertWorkflow(workflow models.Workflow) string {
 
 	log.Println("Creating a new workflow")
@@ -185,9 +195,11 @@ func insertWorkflow(workflow models.Workflow) string {
 	fmt.Printf("Inserted a single record %v", uuid)
 
 	queue.Enqueue(uuid)
+
 	return uuid
 }
 
+// Get one workflow from uuid
 func getWorkflow(uuid string) (models.Workflow, error) {
 	db := createConnection()
 
@@ -200,7 +212,7 @@ func getWorkflow(uuid string) (models.Workflow, error) {
 	row := db.QueryRow(sqlStatement, uuid)
 
 	// unmarshal the row object to user
-	err := row.Scan(&workflow.UUID, &workflow.Status, &workflow.Data, &workflow.Steps)
+	err := row.Scan(&workflow.UUID, &workflow.Status, &workflow.Data, pq.Array(&workflow.Steps))
 
 	switch err {
 	case sql.ErrNoRows:
@@ -215,20 +227,16 @@ func getWorkflow(uuid string) (models.Workflow, error) {
 	return workflow, err
 }
 
-// get one user from the DB by its userid
+// Get all workflows from the DB.
 func getAllWorkflows() ([]models.Workflow, error) {
-	// create the postgres db connection
 	db := createConnection()
 
-	// close the db connection
 	defer db.Close()
 
 	var workflows []models.Workflow
 
-	// create the select sql query
 	sqlStatement := `SELECT * FROM workflow`
 
-	// execute the sql statement
 	rows, err := db.Query(sqlStatement)
 
 	if err != nil {
@@ -240,7 +248,6 @@ func getAllWorkflows() ([]models.Workflow, error) {
 	for rows.Next() {
 		var workflow models.Workflow
 
-		// unmarshal the row object to user
 		err = rows.Scan(&workflow.UUID, &workflow.Status, &workflow.Data, pq.Array(&workflow.Steps))
 
 		if err != nil {
@@ -254,19 +261,15 @@ func getAllWorkflows() ([]models.Workflow, error) {
 	return workflows, err
 }
 
-// update user in the DB
+// Update user in the DB
 func updateWorkflow(uuid string, workflow models.Workflow) int64 {
 
-	// create the postgres db connection
 	db := createConnection()
 
-	// close the db connection
 	defer db.Close()
 
-	// create the update sql query
 	sqlStatement := `UPDATE workflow SET status=$2 WHERE uuid=$1`
 
-	// execute the sql statement
 	res, err := db.Exec(sqlStatement, uuid, workflow.Status)
 
 	if err != nil {
@@ -284,6 +287,7 @@ func updateWorkflow(uuid string, workflow models.Workflow) int64 {
 	return rowsAffected
 }
 
+// Delete workflow in database
 func deleteWorkflow(uuid string) int64 {
 
 	db := createConnection()
@@ -307,4 +311,30 @@ func deleteWorkflow(uuid string) int64 {
 	fmt.Printf("Total rows/record affected %v", rowsAffected)
 
 	return rowsAffected
+}
+
+// Generate workflow file .csv
+func generateCsv(workflow models.Workflow) {
+	path, _ := filepath.Abs("./")
+
+	folder := filepath.Join(".", "spreadsheets")
+
+	os.MkdirAll(folder, os.ModePerm)
+	file, err := os.Create(fmt.Sprintf("%s/spreadsheets/%s.csv", path, workflow.UUID))
+
+	if err != nil {
+		log.Fatalf("Error while create files. %v", err)
+
+	}
+
+	defer file.Close()
+
+	writer := csv.NewWriter(file)
+	defer writer.Flush()
+
+	var list []string
+
+	list = append(list, string(workflow.Data))
+
+	log.Printf("generate a CSV file with workflow data")
 }
