@@ -1,17 +1,22 @@
 package main
 
 import (
+	"backend-test/helpers"
+	"backend-test/router"
 	"fmt"
 	"log"
 	"net/http"
 )
 
+var queue helpers.ElementQueue
+
 func main() {
 
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, "Hello from Docker")
-	})
+	r := router.Router()
 
 	fmt.Println("Listening on :8080")
-	log.Fatal(http.ListenAndServe(":8080", nil))
+
+	queue.Create()
+
+	log.Fatal(http.ListenAndServe(":8080", r))
 }
