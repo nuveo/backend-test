@@ -77,4 +77,4 @@ http://localhost:8080/workflow
 
 Nesse exemplo estou passando o uuid null, porem o jpa ira persistir um uuid aleatório, como mostra a imagem.
 
-![Alt text](relative/src/main/resources/templates/image/img.jpg?raw=true "Title")
+![Alt text](https://github.com/matheuslimat/backend-test/blob/matheuslima/src/main/resources/templates/image/POSTandProducer.png)
