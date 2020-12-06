@@ -1,14 +1,13 @@
 package com.matheuslima.apiworkflow.services;
 
 import java.io.IOException;
-import java.util.List;
+import java.util.Stack;
 
 import com.matheuslima.apiworkflow.domain.WorkFlow;
-import com.opencsv.exceptions.CsvDataTypeMismatchException;
-import com.opencsv.exceptions.CsvRequiredFieldEmptyException;
+import com.rabbitmq.client.Channel;
 
 public interface WorkFlowConsumerService {
 	
-	void writeWorkFlowInFile(List<WorkFlow> wf) throws CsvDataTypeMismatchException, CsvRequiredFieldEmptyException, IOException;
+	void writeWorkFlowInFile(Channel channel, String queue, Stack<WorkFlow> listFileCsv) throws IOException;
 	
 }

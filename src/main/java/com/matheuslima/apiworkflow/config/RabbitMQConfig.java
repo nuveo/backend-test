@@ -50,7 +50,7 @@ public class RabbitMQConfig {
 	@Bean
 	public AmqpTemplate rabbitTemplate(ConnectionFactory connectionFactory) {
 		final RabbitTemplate rabbitTemplate = new RabbitTemplate(connectionFactory);
-		rabbitTemplate.setMessageConverter(jsonMessageConverter()); // tentar usar o Jsonb
+		rabbitTemplate.setMessageConverter(jsonMessageConverter());
 		return rabbitTemplate;
 	}
 }

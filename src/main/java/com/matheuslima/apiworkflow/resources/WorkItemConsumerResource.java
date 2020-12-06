@@ -1,12 +1,9 @@
 package com.matheuslima.apiworkflow.resources;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Stack;
 import java.util.concurrent.TimeoutException;
-
-import javax.json.bind.Jsonb;
-import javax.json.bind.JsonbBuilder;
 
 import org.springframework.amqp.rabbit.annotation.RabbitHandler;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,17 +17,16 @@ import com.matheuslima.apiworkflow.domain.WorkFlow;
 import com.matheuslima.apiworkflow.domain.dto.WorkFlowDTO;
 import com.matheuslima.apiworkflow.services.WorkFlowConsumerService;
 import com.matheuslima.apiworkflow.services.WorkFlowService;
-import com.opencsv.exceptions.CsvDataTypeMismatchException;
-import com.opencsv.exceptions.CsvRequiredFieldEmptyException;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
-import com.rabbitmq.client.DeliverCallback;
 
 @RestController
 @RequestMapping("/api/v1/")
 public class WorkItemConsumerResource {
 
+	Stack<WorkFlow> stackWorkFlow = new Stack<WorkFlow>();
+	
 	@Autowired
 	private WorkFlowService wfs;
 
@@ -49,39 +45,17 @@ public class WorkItemConsumerResource {
 	@GetMapping("/workflow/consume")
 	@RabbitHandler
 	public void consume() throws IOException, TimeoutException {
+
 		ConnectionFactory factory = new ConnectionFactory();
 		factory.setHost("localhost");
 		Connection connection = factory.newConnection();
 		Channel channel = connection.createChannel();
-
 		channel.queueDeclare(queue, false, false, false, null);
 		System.out.println(" [*] Waiting for messages. To exit press CTRL+C");
+		wfcs.writeWorkFlowInFile(channel, queue,stackWorkFlow);
 
-		List<WorkFlow> listFileCsv = new ArrayList<>();
-
-		DeliverCallback deliverCallback = (consumerTag, delivery) -> {
-			Jsonb jsonb = JsonbBuilder.create();
-			try {
-				
-				listFileCsv.add(jsonb.fromJson(new String(delivery.getBody(), "UTF-8"), WorkFlow.class));
-				
-			} finally {
-				channel.basicAck(delivery.getEnvelope().getDeliveryTag(), false);
-			}
-			System.out.println("Finished add files");
-
-		};
-			channel.basicConsume(queue, true, deliverCallback, consumerTag -> {
-			});
-
-
-		if (!listFileCsv.isEmpty()) {
-			try {
-				wfcs.writeWorkFlowInFile(listFileCsv);
-			} catch (IOException | CsvRequiredFieldEmptyException | CsvDataTypeMismatchException e) {
-				e.printStackTrace();
-			}
-		}
 	}
+	
+
 
 }
