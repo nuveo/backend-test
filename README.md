@@ -106,4 +106,8 @@ http://localhost:8080/workflow/consume
 
 ![Alt text](https://github.com/matheuslimat/backend-test/blob/matheuslima/src/main/resources/templates/image/CSVWorkFlow2.png)
 
+### Considerações
+
+Para mim foi um desafio utilizar o rabbit MQ em uma API-REST, mas com certeza foi muito gratificante! Espero poder integrar parte do time de vocês em breve, estou aberto ao conhecimento e para novos desafios. Muito Obrigado team nuveo.
+
 
