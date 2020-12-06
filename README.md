@@ -51,7 +51,7 @@ DashBoard RabbitMQ: http://127.0.0.1:15672/
 User: guest
 Pass: guest
 
-## Utilizando Post /workflow
+## Post /workflow
 Uma vez iniciado a classe ApiworkflowApplication, abra o postman e faça sua requisição.
 
 http://localhost:8080/workflow
@@ -78,3 +78,32 @@ http://localhost:8080/workflow
 Nesse exemplo estou passando o uuid null, porem o jpa ira persistir um uuid aleatório, como mostra a imagem.
 
 ![Alt text](https://github.com/matheuslimat/backend-test/blob/matheuslima/src/main/resources/templates/image/POSTandProducer.png)
+
+### PATCH /workflow/{uuid}
+http://localhost:8080/api/v1/workflow/f97af4d3-867b-44d7-afd9-2384df4f9109 -- passar um uuid já existente
+
+No patch eu optei por fazer via JDBC a parte da modificação dos status, também utilizei o controller com a anotação @PatchMapping.
+
+![Alt text](https://github.com/matheuslimat/backend-test/blob/matheuslima/src/main/resources/templates/image/PATCH.png)
+
+### GET /workflow
+
+Lista todos os WorkFlows do banco de dados
+
+http://localhost:8080/workflow
+
+![Alt text](https://github.com/matheuslimat/backend-test/blob/matheuslima/src/main/resources/templates/image/GET.png)
+
+### GET /workflow/consume
+Consome todas as mensagens pendentes estão na fila, também gera um CSV com os dados do WorkFlow.
+Obs: (Pode acontecer do arquivo csv aparentar estar com 0 KB, contudo pode abri-lo normalmente, isso foi um bug no close do arquivo.) 
+
+http://localhost:8080/workflow/consume
+
+![Alt text](https://github.com/matheuslimat/backend-test/blob/matheuslima/src/main/resources/templates/image/GETandConsumer.png)
+
+![Alt text](https://github.com/matheuslimat/backend-test/blob/matheuslima/src/main/resources/templates/image/CSVWorkFlow.png)
+
+![Alt text](https://github.com/matheuslimat/backend-test/blob/matheuslima/src/main/resources/templates/image/CSVWorkFlow2.png)
+
+
