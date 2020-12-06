@@ -10,7 +10,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.matheuslima.apiworkflow.domain.WorkFlow;
 import com.matheuslima.apiworkflow.domain.dto.WorkFlowDTO;
-import com.matheuslima.apiworkflow.services.RabbitMQSenderService;
+import com.matheuslima.apiworkflow.services.WorkFlowProducerService;
+import com.matheuslima.apiworkflow.services.WorkFlowProducerServiceImpl;
 import com.matheuslima.apiworkflow.services.WorkFlowService;
 
 @RestController
@@ -21,17 +22,16 @@ public class WorkItemProducerResource {
 	private WorkFlowService wfs;
 	
 	@Autowired
-	RabbitMQSenderService rabbitMQSender;
+	WorkFlowProducerService rabbitMQSender;
 	
 	@PostMapping("/workflow")
-	public ResponseEntity post(@RequestBody WorkFlow wf) { 
-		
-
-		//rabbitMQSender.send(wf);
+	public ResponseEntity<WorkFlowDTO> post(@RequestBody WorkFlow wf) { 
 		
 		try {
-			//WorkFlowDTO wfe = wfs.save(wf);
-			return ResponseEntity.ok(wfs.save(wf));
+			WorkFlowDTO wfd = wfs.save(wf);
+			rabbitMQSender.send(wf);
+			
+			return ResponseEntity.ok(wfd);
 			
 		}catch (Exception e) {
 			return ResponseEntity.badRequest().build();

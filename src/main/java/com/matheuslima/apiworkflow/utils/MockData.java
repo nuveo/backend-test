@@ -23,7 +23,7 @@ public class MockData {
 	
 	@PostConstruct
 	public void saveWorkflow() {
-		WorkFlow wf1 = new WorkFlow();
+		/*WorkFlow wf1 = new WorkFlow();
 		
 		Vector<String> steps = new Vector<String>(); 
 		steps.add("Propose idea");
@@ -38,7 +38,7 @@ public class MockData {
 		Jsonb jsonb = JsonbBuilder.create();
 		String result = jsonb.toJson(wf1);
 		wf1.setData(result);
-		wfr.save(wf1);
+		wfr.save(wf1);*/
 	}
 	
 	public static void main(String[] args) {

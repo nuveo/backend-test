@@ -23,6 +23,13 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-amqp</artifactId>
 		</dependency>
+		<!-- https://mvnrepository.com/artifact/org.springframework.amqp/spring-amqp -->
+		<dependency>
+    		<groupId>org.springframework.amqp</groupId>
+    		<artifactId>spring-amqp</artifactId>
+    		<version>2.3.1</version>
+		</dependency>
+		
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-web</artifactId>
@@ -48,11 +55,13 @@
 			<artifactId>spring-boot-starter-test</artifactId>
 			<scope>test</scope>
 		</dependency>
+		<!-- https://mvnrepository.com/artifact/com.rabbitmq/amqp-client -->
 		<dependency>
-			<groupId>org.springframework.amqp</groupId>
-			<artifactId>spring-rabbit-test</artifactId>
-			<scope>test</scope>
+    		<groupId>com.rabbitmq</groupId>
+    		<artifactId>amqp-client</artifactId>
+    		<version>5.10.0</version>
 		</dependency>
+		
 		<dependency>
     		<groupId>com.vladmihalcea</groupId>
     		<artifactId>hibernate-types-52</artifactId>

@@ -8,7 +8,7 @@ import org.springframework.stereotype.Service;
 import com.matheuslima.apiworkflow.domain.WorkFlow;
 
 @Service
-public class RabbitMQSenderService {
+public class WorkFlowProducerServiceImpl implements WorkFlowProducerService{
 	
 	@Autowired
 	private AmqpTemplate rabbitTemplate;
