@@ -1,31 +1,87 @@
-# Backend Test
+# Teste de back-end para o Nuveo
 
-Develop the workflow's REST API following the specification bellow and document it.
+### Requisitos
 
-## Delivery instructions
+- Go 1.15
+- Docker
 
-Clone this project and push a private repository in the [GitHub](https://github.com/), [Gitlab](https://about.gitlab.com/) or [Bitbucket](https://bitbucket.org/). When you want to our review, write any information that you think important in the README.md and send an email to talentos@nuveo.ai. We'll follow your instructions to run your code and look the outcome. 
+### Instalando
 
-## Defining a workflow
+Primeiro, levante uma instância do PostgreSQL:
 
-|Name|Type|Description|
-|-|-|-|
-|UUID|UUID|workflow unique identifier|
-|status|Enum(inserted, consumed)|workflow status|
-|data|JSONB|workflow input|
-|steps|Array|name of workflow steps
+```
+sudo docker run --rm -name nuveotest2 -e POSTGRES_PASSWORD=password -p 5432:5432 -d postgres
+```
 
-## Endpoints
+Copie o esquema disponível em `util/` para o container e use-o no pqsl:
 
-|Verb|URL|Description|
-|-|-|-|
-|POST|/workflow|insert a workflow on database and on queue and respond request with the inserted workflow|
-|PATCH|/workflow/{UUID}|update status from specific workflow|
-|GET|/workflow|list all workflows|
-|GET|/workflow/consume|consume a workflow from queue and generate a CSV file with workflow.Data|
+```
+sudo docker cp util/database.sql nuveotest:/
+sudo docker exec  nuveotest bash -c "PGPASSWORD=password psql -h localhost -U postgres -d postgres -f database.sql"
+```
 
-## Technologies
+Logo após, levante uma instância do RabbitMQ:
 
-- Go, C, C++, Python, Java or any other that you know
-- PostgreSQL
-- A message queue that you choose, but describe why you choose.
+```
+sudo docker run -d --rm --hostname my-rabbittest --name some-rabbit -p 15672:15672 -p 5672:5672 rabbitmq:management
+```
+
+Feito isto, faça o build do repositório:
+
+```
+go build
+```
+
+Por fim, execute o arquivo!
+
+```
+./main
+```
+
+### Exemplos válidos de requisições:
+
+```
+POST http://localhost:8080/workflow
+Content-Type: application/json
+
+{
+  "data": [
+    {
+      "texto": "Ronaldo",
+      "numero": 1
+    },
+    {
+      "texto": "Romário",
+      "numero": 2
+    },
+    {
+      "texto": "Ronaldinho",
+      "numero": 3
+    }
+  ],
+  "steps": [
+    {
+      "step": 1
+    }
+  ]
+}
+```
+
+```
+PATCH POST http://localhost:8080/workflow/{uuid}
+Content-Type: application/json
+
+{
+  status: "inserted"
+}
+```
+
+### TODO
+
+- Implementar testes unitários nos serviços
+- Implementar testes unitários nos handlers
+- Criar Dockerfiles da API e do banco de dados
+- Criar dockercompose.yml
+- Documentar API com OpenAPI e GoSwagger
+- Documentar serviços
+
